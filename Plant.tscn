@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="GDScript" id=4]
+script/source = "extends Sprite
+
+var type = \"\"
+
+func change_type(t):
+	type = t
+	if type == \"dirt\":
+		type += str(floor(rand_range(1, 9)))
+	texture = load(\"res://icons/\" + type + \".png\")
+"
+
+[node name="Plant" type="Sprite"]
+centered = false
+script = SubResource( 4 )

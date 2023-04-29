@@ -954,6 +954,8 @@ func set_icon_size():
 			4:
 				if get_parent() is TextureButton:
 					change_icon_size_override(3, Vector2(-3 + custom_icon_offset.x, custom_icon_offset.y))
+				elif str(get_path()).find(\"/root/Main/Info\") != -1:
+					change_icon_size_override(3, Vector2(2 + custom_icon_offset.x, custom_icon_offset.y))
 				else:
 					change_icon_size_override(3, Vector2(-3 + custom_icon_offset.x, -3 + custom_icon_offset.y))
 			5:
@@ -1086,6 +1088,7 @@ func change_set_size(n):
 	if not line_update:
 		size_update = true
 	set_icon_size()
+	update_border()
 
 func set_font():
 	if not font_set and (cjk or (forced_font != null and forced_font.get_path() != \"res://Title_Font.tres\")):
@@ -1131,8 +1134,7 @@ func update():
 			texts[8].dynamic_icons = dynamic_icons
 			texts[8].text = raw_string
 			texts[8].raw_string = raw_string
-			if get_parent() is TextureButton and get_parent().title_button:
-				texts[8].icon_z_index = icon_z_index
+			texts[8].icon_z_index = icon_z_index
 			texts[8].check_locale()
 			texts[8].rect_size = rect_size
 			texts[8].e_spaced = false

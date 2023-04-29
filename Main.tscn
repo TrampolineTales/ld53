@@ -1,4 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Outline Label.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Garden.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Card.tscn" type="PackedScene" id=3]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends Node2D
@@ -6,25 +10,82 @@ script/source = "extends Node2D
 var d_time = 0.0
 var mouse_position = Vector2(0, 0)
 var press_timer = 0
+var tile_database = {}
+var icon_texture_database = {}
+var rarity_database = { \"seeds\": { \"common\": [], \"uncommon\": [], \"rare\": [], \"very_rare\": [], \"none\": [] } }
+var seed_being_added = \"\"
+var time_until_seeds = 3
+var water_due = 25
+var water_due_time = 12
+var pass_time_button
 
 func _ready():
-	var button = preload(\"res://TT Button.tscn\").instance()
-	button.button_text = \"asdf\"
-	button.color = Color(255, 255, 255, 255)
-	button.call = \"test\"
-	button.target = self
-	add_child(button)
+	var tile_file = File.new()
+	tile_file.open(\"res://JSON/Plants - JSON.json\", tile_file.READ)
+	var tile_text = tile_file.get_as_text()
+	var tile_db = JSON.parse(tile_text)
+	tile_file.close()
+	
+	for a in tile_db.result:
+		var t = a
+		if typeof(a) == TYPE_DICTIONARY:
+			t = a.type
+		if not tile_db.result.has(t):
+			continue
+		if tile_db.result[t].rarity == null:
+			tile_db.result[t].rarity = \"none\"
+		rarity_database[\"seeds\"][tile_db.result[t].rarity].push_back(t)
+		tile_database[t] = tile_db.result[t]
+		tile_database[t][\"type\"] = str(t)
+		if not icon_texture_database.has(str(t)):
+			icon_texture_database[str(t)] = preload(\"res://icons/missing.png\")
+	
+	$\"Cards/Card\".data = tile_database[\"cactus\"]
+	$\"Cards/Card\".set_card_size()
+	
+	pass_time_button = preload(\"res://TT Button.tscn\").instance()
+	pass_time_button.color = Color(\"#BF3C59\")
+	pass_time_button.button_text = \"<icon_time><color_FF0037>1<end>\"
+	pass_time_button.rect_position = Vector2(940, 520)
+	pass_time_button.call = \"pass_time\"
+	pass_time_button.target = self
+	add_child(pass_time_button)
 
-func test():
-	$\"Background\".color = Color(255, 255, 255, 255)
+func pass_time():
+	water_due_time -= 1
+	$\"Info2\".force_update = true
+	time_until_seeds -= 1
+	$\"Info3\".force_update = true
+	for x in $\"Garden\".grid_size.x:
+		for y in $\"Garden\".grid_size.y:
+			$\"Garden\".grid[x][y].growth += 1
+
+func add_seed(type):
+	seed_being_added = type
+	$\"Cards\".visible = false
 
 func _process(delta):
 	d_time += delta
 	while d_time >= 1.0/60.0:
 		mouse_position = get_global_mouse_position()
 		d_time -= 1.0/60.0
+		
+		$\"Info\".raw_string = \"<icon_rain><color_388BFF>\" + str($\"Garden\".water) + \"<end>\"
+		if time_until_seeds <= 0 and seed_being_added == \"\":
+			$\"Info2\".raw_string = \"Pick a Seed to Plant!\"
+			$\"Cards\".visible = true
+		else:
+			$\"Info2\".raw_string = \"Seed delivery in <icon_time><color_FF0037>\" + str(time_until_seeds) + \"<end>\"
+			$\"Cards\".visible = false
+		$\"Info3\".raw_string = \"Need to deliver <color_388BFF><icon_rain>\" + str(water_due) + \"<end> in <icon_time><color_FF0037>\" + str(water_due_time) + \"<end>\"
+		if seed_being_added != \"\":
+			$\"Dragged Seed\".raw_string = \"<icon_\" + seed_being_added + \">\"
+			$\"Dragged Seed\".rect_position = Vector2(mouse_position.x - 24, mouse_position.y - 24)
+			$\"Dragged Seed\".icon_z_index = 10
 		for node in get_tree().get_nodes_in_group(\"Anim Update\"):
 			node.call(\"update\")
+		$\"Info2\".rect_position.x = 512 - ($\"Info2\".get_font(\"font\").get_string_size($\"Info2\".text).x - $\"Info2\".get_font(\"font\").extra_spacing_space) * 2 * $\"Info2\".current_scale
+		$\"Info3\".rect_position.x = 512 - ($\"Info3\".get_font(\"font\").get_string_size($\"Info3\".text).x - $\"Info3\".get_font(\"font\").extra_spacing_space) * 2 * $\"Info3\".current_scale
 "
 
 [sub_resource type="GDScript" id=2]
@@ -129,15 +190,64 @@ var last_selector_button_pos
 
 [node name="Main" type="Node2D"]
 script = SubResource( 1 )
-
-[node name="Background" type="ColorRect" parent="."]
-margin_right = 1024.0
-margin_bottom = 576.0
-color = Color( 0.545098, 0, 1, 1 )
+__meta__ = {
+"_edit_lock_": true
+}
 
 [node name="Options Sprite" type="Node2D" parent="."]
+__meta__ = {
+"_edit_lock_": true
+}
 
 [node name="Options" type="Control" parent="Options Sprite"]
 margin_right = 40.0
 margin_bottom = 40.0
 script = SubResource( 2 )
+
+[node name="Background" type="ColorRect" parent="."]
+margin_right = 1024.0
+margin_bottom = 576.0
+color = Color( 0.360784, 0.262745, 0.607843, 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Garden" parent="." instance=ExtResource( 2 )]
+
+[node name="Cards" type="Node2D" parent="."]
+visible = false
+position = Vector2( 16, 96 )
+z_index = 4
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Card" parent="Cards" instance=ExtResource( 3 )]
+
+[node name="Card2" parent="Cards" instance=ExtResource( 3 )]
+margin_left = 342.0
+margin_right = 342.0
+
+[node name="Card3" parent="Cards" instance=ExtResource( 3 )]
+margin_left = 684.0
+margin_right = 684.0
+
+[node name="Info" parent="." instance=ExtResource( 1 )]
+margin_top = 526.0
+margin_bottom = 536.0
+
+[node name="Info2" parent="." instance=ExtResource( 1 )]
+margin_top = 526.0
+margin_bottom = 536.0
+
+[node name="Info3" parent="." instance=ExtResource( 1 )]
+margin_top = 14.0
+margin_bottom = 24.0
+
+[node name="Tooltips" type="Node2D" parent="."]
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Dragged Seed" parent="." instance=ExtResource( 1 )]
+margin_bottom = 10.0

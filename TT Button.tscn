@@ -75,10 +75,6 @@ func _init():
 		Utils.connect(\"freeing_orphans\", self, \"_free_if_orphaned\")
 
 func _input(event):
-	if not get_global_rect().intersects(Rect2(0, 0, options.resolution_x, options.resolution_y)) and not can_be_offscreen:
-		if event is InputEventMouseMotion and not $\"/root/Main/Selector Sprite/Selector\".visible:
-			get_tree().set_input_as_handled()
-		return
 	var hotkey_input = event is InputEventKey or event is InputEventMouseButton or event is InputEventJoypadButton
 	if options.input_type == 1 and hotkey_input:
 		for s in shortcuts:
@@ -135,7 +131,7 @@ func _input(event):
 						down = true
 					unpress()
 					break
-		if hovering and event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+		if hovering and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.is_pressed():
 			was_down_while_active = true
 			press()
 		elif event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.is_pressed() and options.done_assigning:
@@ -227,20 +223,21 @@ func _ready():
 func update():
 	if not is_inside_tree():
 		return
-	if delay <= 0:
-		if active and (hovering and (not OS.is_window_focused() or (texture == null and ($\"/root/Main\".mouse_position.x < background.rect_global_position.x - 2 or $\"/root/Main\".mouse_position.x > background.rect_global_position.x + 2 + background.rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < background.rect_global_position.y - 2 or $\"/root/Main\".mouse_position.y > background.rect_global_position.y + 2 + background.rect_size.y * rect_scale.y)) or unhovering_texture()) or not OS.is_window_focused()) and visible and options.done_assigning:
-			unhover()
-			hovering = false
-		elif active and not hovering and OS.is_window_focused() and (texture == null and (not ($\"/root/Main\".mouse_position.x < background.rect_global_position.x - 2 or $\"/root/Main\".mouse_position.x > background.rect_global_position.x + 2 + background.rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < background.rect_global_position.y - 2 or $\"/root/Main\".mouse_position.y > background.rect_global_position.y + 2 + background.rect_size.y * rect_scale.y)) or hovering_texture()) and visible:
-			hover()
-		if $\"/root/Main\".press_timer > 0 and ((texture == null and (not ($\"/root/Main\".mouse_position.x < background.rect_global_position.x - 2 or $\"/root/Main\".mouse_position.x > background.rect_global_position.x + 2 + background.rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < background.rect_global_position.y - 2 or $\"/root/Main\".mouse_position.y > background.rect_global_position.y + 2 + background.rect_size.y * rect_scale.y))) or hovering_texture()):
-			was_down_while_active = true
-			press()
+	if active and (hovering and (not OS.is_window_focused() or (texture == null and ($\"/root/Main\".mouse_position.x < background.rect_global_position.x - 2 or $\"/root/Main\".mouse_position.x > background.rect_global_position.x + 2 + background.rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < background.rect_global_position.y - 2 or $\"/root/Main\".mouse_position.y > background.rect_global_position.y + 2 + background.rect_size.y * rect_scale.y)) or unhovering_texture()) or not OS.is_window_focused()) and visible and options.done_assigning:
+		unhover()
+		hovering = false
+	elif active and not hovering and OS.is_window_focused() and (texture == null and (not ($\"/root/Main\".mouse_position.x < background.rect_global_position.x - 2 or $\"/root/Main\".mouse_position.x > background.rect_global_position.x + 2 + background.rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < background.rect_global_position.y - 2 or $\"/root/Main\".mouse_position.y > background.rect_global_position.y + 2 + background.rect_size.y * rect_scale.y)) or hovering_texture()) and visible:
+		hover()
+	if $\"/root/Main\".press_timer > 0 and ((texture == null and (not ($\"/root/Main\".mouse_position.x < background.rect_global_position.x - 2 or $\"/root/Main\".mouse_position.x > background.rect_global_position.x + 2 + background.rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < background.rect_global_position.y - 2 or $\"/root/Main\".mouse_position.y > background.rect_global_position.y + 2 + background.rect_size.y * rect_scale.y))) or hovering_texture()):
+		was_down_while_active = true
+		press()
 	if not OS.is_window_focused():
 		delay = 3
 		hovering = false
 	elif delay != 0:
 		delay -= 1
+	if delay == 1:
+		unpress()
 	if can_be_pressed():
 		selectable = true
 	else:
@@ -274,7 +271,7 @@ func unhover():
 		hovering = false
 
 func press():
-	if can_be_pressed() and ((was_down_while_active and options.input_type == 1) or options.input_type == 0):
+	if can_be_pressed() and ((was_down_while_active and options.input_type == 1) or options.input_type == 0) and not $\"/root/Main/Cards\".visible and $\"/root/Main\".seed_being_added == \"\":
 		if delayed:
 			delayed = false
 			background.color = hover_color
@@ -282,7 +279,7 @@ func press():
 		if active and toggle and down:
 			unpress()
 			do_call()
-		elif active and not down:
+		elif active:
 			if saved_raw_string != tr(\"removal_pay\") and saved_raw_string != tr(\"reroll_pay\") and not hotkey:
 				var str2 = saved_raw_string
 				while str2.find(\"<color_FBF236>\") != -1:
@@ -293,7 +290,7 @@ func press():
 							end = start + c
 							break
 					str2 = str2.substr(0, start) + str2.substr(start + 14, end - 14 - str2.substr(0, start).length()) + str2.substr(end + 5, -1)
-				text_node.raw_string = \"<color_FBF236>\" + str2 + \"<end>\"
+				text_node.raw_string = str2
 				update_size()
 				text_node.force_update = true
 				text_node.update()
@@ -308,6 +305,7 @@ func press():
 				if texture == null:
 					down = true
 				do_call()
+				delay = 10
 			else:
 				held = true
 
@@ -600,11 +598,15 @@ margin_bottom = 40.0
 [node name="Text" parent="." instance=ExtResource( 1 )]
 
 [node name="Top" type="Line2D" parent="."]
+default_color = Color( 0, 0, 0, 1 )
 
 [node name="Bottom" type="Line2D" parent="."]
+default_color = Color( 0, 0, 0, 1 )
 
 [node name="Left" type="Line2D" parent="."]
+default_color = Color( 0, 0, 0, 1 )
 
 [node name="Right" type="Line2D" parent="."]
+default_color = Color( 0, 0, 0, 1 )
 
 [node name="Sprite" type="Sprite" parent="."]

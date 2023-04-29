@@ -13,13 +13,14 @@ func _init():
 	if not Utils.is_connected(\"freeing_orphans\", self, \"_free_if_orphaned\"):
 		Utils.connect(\"freeing_orphans\", self, \"_free_if_orphaned\")
 
-func set_type(_type):
-	type = _type
+func _ready():
+	if type == null:
+		type = \"seed\"
 	texture = load(\"res://icons/\" + type + \".png\")
 "
 
-[node name="Icon" type="Sprite"]
-z_index = 4
+[node name="Outline Icon" type="Sprite"]
+z_index = 3
 z_as_relative = false
 centered = false
 script = SubResource( 1 )

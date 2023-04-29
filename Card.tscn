@@ -1,0 +1,444 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://Outline Label.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Outline Icon.tscn" type="PackedScene" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Control
+
+var background
+var border
+var active = false
+var hovering = false
+var selectable = false
+var off_screen = false
+var tooltip_card = false
+var item = false
+var held = false
+var delay = 0
+var r_x_mod = 0
+var extra_height = 0
+var cant_go_dirs = []
+var selector_alignment = \"card\"
+
+var data = {\"type\": \"seed\", \"name\": \"\", \"text\": \"\", \"rarity\": \"none\"}
+
+func _free_if_orphaned():
+	if not is_inside_tree():
+		queue_free()
+
+func _init():
+	if not Utils.is_connected(\"freeing_orphans\", self, \"_free_if_orphaned\"):
+		Utils.connect(\"freeing_orphans\", self, \"_free_if_orphaned\")
+
+func _input(event):
+	if get_parent().visible and hovering and event is InputEventMouseButton and ((event.is_pressed() and $\"/root/Main/Options Sprite/Options\".input_type == 1) or ($\"/root/Main/Options Sprite/Options\".input_type == 0 and (event.is_pressed()))) and event.button_index == BUTTON_LEFT and not event.is_echo():
+		if $\"/root/Main/Options Sprite/Options\".input_type == 0:
+			$\"/root/Main\".add_seed(data.type)
+		else:
+			held = true
+	elif held and active and hovering and event is InputEventMouseButton and not event.is_pressed() and event.button_index == BUTTON_LEFT and not event.is_echo() and not $\"/root/Main/Options Sprite/Options\".visible and not $\"/root/Main/Title\".visible:
+		if $\"/root/Main/Options Sprite/Options\".input_type == 1 and held:
+			$\"/root/Main\".add_seed(data.type)
+			held = false
+
+func _ready():
+	set_icon_size()
+		
+	background.color = \"094643\"
+	
+	set_card_size()
+
+func set_icon_size():
+	var icon = $\"Icon\"
+	
+	background = $\"Background\"
+	border = $\"Border\"
+	
+	icon.type = data.type
+	icon.texture = preload(\"res://icons/seed.png\")
+	
+	background.rect_size.x = 300 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+	
+	if int($\"/root/Main/Options Sprite/Options\".display_font) == 1:
+		icon.position = Vector2(background.rect_size.x / 2 - icon.texture.get_size().x * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 94 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - icon.texture.get_size().y * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 1) * 16)
+	elif int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
+		icon.position = Vector2(background.rect_size.x / 2 - icon.texture.get_size().x * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 100 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - icon.texture.get_size().y * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 1) * 16)
+	else:
+		icon.position = Vector2(background.rect_size.x / 2 - icon.texture.get_size().x * 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 90 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - icon.texture.get_size().y * 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 1) * 8)
+	icon.scale = Vector2(8, 8)
+		
+	icon.position.y -= 2
+
+func set_card_size():
+	var title = $\"Background/Title\"
+	var rarity = $\"Background/Rarity\"
+	var value = $\"Background/Value\"
+	var description = $\"Background/Description\"
+	var separator = $\"Separator\"
+	var font_offset
+	var font_size_value = 3
+	var cjk_mod
+	var cjk = $\"/root/Main/Options Sprite/Options\".CJK_lang
+
+	background = $\"Background\"
+
+	title.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+	rarity.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+	value.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+	description.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+	separator.width = 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+
+	title.dont_scale = true
+	rarity.dont_scale = true
+	value.dont_scale = true
+	description.dont_scale = true
+
+	if cjk:
+		description.diff_cjk_space = false
+		cjk_mod = 1
+		title.scale_mod = -1
+		rarity.scale_mod = -1
+		value.scale_mod = -1
+		description.scale_mod = -1
+		title.text_mod -= 1
+		rarity.text_mod -= 1
+		value.text_mod -= 1
+		description.text_mod -= 1
+		title.tooltip_desc = true
+		value.tooltip_desc = true
+		description.tooltip_desc = true
+		title.change_set_size(title.base_scale)
+		rarity.change_set_size(rarity.base_scale)
+		value.change_set_size(value.base_scale)
+		description.change_set_size(description.base_scale)
+		title.custom_icon_offset = Vector2(0, 4)
+		rarity.custom_icon_offset = Vector2(0, 4)
+		value.custom_icon_offset = Vector2(0, 4)
+		description.custom_icon_offset = Vector2(0, 4)
+	else:
+		if int($\"/root/Main/Options Sprite/Options\".display_font) == 0:
+			title.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+			title.change_set_size(0.75)
+			title.base_scale = 0.75
+			rarity.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+			rarity.change_set_size(0.75)
+			rarity.base_scale = 0.75
+			value.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+			value.change_set_size(0.75)
+			value.base_scale = 0.75
+			description.tooltip_desc = true
+			description.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+			description.change_set_size(0.75)
+			description.base_scale = 0.75
+			cjk_mod = 4
+		else:
+			title.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25) - 1
+			title.text_mod -= 1
+			title.change_set_size(0.5)
+			title.base_scale = 0.5
+			rarity.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25) - 1
+			rarity.text_mod -= 1
+			rarity.change_set_size(0.5)
+			rarity.base_scale = 0.5
+			value.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25) - 1
+			value.text_mod -= 1
+			value.change_set_size(0.5)
+			value.base_scale = 0.5
+			description.tooltip_desc = true
+			description.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25) - 1
+			description.text_mod -= 1
+			description.change_set_size(0.5)
+			description.base_scale = 0.5
+			cjk_mod = 1
+		title.v_spaced = true
+		rarity.v_spaced = true
+		value.v_spaced = true
+		description.v_spaced = true
+	
+	if data.has(\"type\"):
+		title.raw_string = tr(data.name)
+		title.size_update = true
+		title.force_update = true
+		title.update()
+		
+		if cjk or int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+			for i in title.get_child(0).icons:
+				i.active = false
+		else:
+			for i in title.texts[8].icons:
+				i.active = false
+		
+		if cjk:
+			title.rect_position.x = background.rect_size.x / 2 - title.get_font(\"font\").get_string_size(title.get_child(0).text).x * title.current_scale / 2
+			font_offset = title.get_font(\"font\").get_height() * title.current_scale
+		else:
+			if int($\"/root/Main/Options Sprite/Options\".display_font) == 1:
+				title.rect_position = Vector2(background.rect_size.x / 2 - (title.get_child(0).get_font(\"font\").get_string_size(title.get_child(0).text.substr(0, title.get_child(0).text.find(\"\\\\n\"))).x - title.get_child(0).get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * title.current_scale, 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+			elif int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
+				title.rect_position = Vector2(background.rect_size.x / 2 - (title.get_child(0).get_font(\"font\").get_string_size(title.get_child(0).text.substr(0, title.get_child(0).text.find(\"\\\\n\"))).x - 16) * cjk_mod / 2 * title.current_scale, 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+			else:
+				title.rect_position = Vector2(background.rect_size.x / 2 - (title.get_font(\"font\").get_string_size(title.text.substr(0, title.text.find(\"\\\\n\"))).x - title.get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * title.current_scale, 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+			var saved_w
+			if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+				saved_w = (title.get_child(0).get_font(\"font\").get_string_size(title.get_child(0).text.substr(0, title.get_child(0).text.find(\"\\\\n\"))).x - title.get_child(0).get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * title.current_scale
+			else:
+				saved_w = (title.get_font(\"font\").get_string_size(title.text.substr(0, title.text.find(\"\\\\n\"))).x - title.get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * title.current_scale
+			if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+				var saved_pos = title.get_child(0).text.find(\"\\\\n\")
+				for i in range(title.get_child(0).text.count(\"\\\\n\")):
+					var w = (title.get_child(0).get_font(\"font\").get_string_size(title.get_child(0).text.substr(saved_pos, title.get_child(0).text.substr(saved_pos + 1, -1).find(\"\\\\n\"))).x - title.get_child(0).get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * title.current_scale
+					if w > saved_w:
+						title.rect_position.x = background.rect_size.x / 2 - w
+						w = saved_w
+					saved_pos = title.get_child(0).text.substr(saved_pos, -1).find(\"\\\\n\")
+			else:
+				var saved_pos = title.text.find(\"\\\\n\")
+				for i in range(title.text.count(\"\\\\n\")):
+					var w = (title.get_font(\"font\").get_string_size(title.text.substr(saved_pos, title.text.substr(saved_pos + 1, -1).find(\"\\\\n\"))).x - title.get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * title.current_scale
+					if w > saved_w:
+						title.rect_position.x = background.rect_size.x / 2 - w
+						w = saved_w
+					saved_pos = title.text.substr(saved_pos, -1).find(\"\\\\n\")
+			if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+				font_offset = (title.get_child(0).get_font(\"font\").get_height() + 4) * title.current_scale
+			else:
+				font_offset = (title.get_font(\"font\").get_height() + 34) * title.current_scale
+		
+		if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+			$\"Icon\".position.y += (font_offset + 8) * title.get_child(0).text.count(\"\\\\n\")
+		else:
+			$\"Icon\".position.y += (font_offset + 8) * title.text.count(\"\\\\n\")
+
+		match data.rarity:
+			\"common\":
+				rarity.raw_string = \"<color_797979>Common<end>\"
+			\"uncommon\":
+				rarity.raw_string = \"<color_38769A>Uncommon<end>\"
+			\"rare\":
+				rarity.raw_string = \"<color_F8F87B>Rare<end>\"
+			\"very_rare\":
+				rarity.raw_string = \"<color_4A1369>Very Rare<end>\"
+				
+		if data.type == \"hover_coin\":
+			rarity.raw_string = \"<color_797979>\"+ tr(\"common\") + \"<end>\"
+		rarity.change_font_size(font_size_value, true)
+		if cjk:
+			rarity.rect_position = Vector2(background.rect_size.x / 2 - rarity.get_font(\"font\").get_string_size(rarity.get_child(0).text).x * rarity.current_scale / 2, title.rect_position.y + font_offset + (156 - (title.get_font(\"font\").get_height()) * 0.5) * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+		else:
+			if int($\"/root/Main/Options Sprite/Options\".display_font) == 1:
+				rarity.rect_position = Vector2(background.rect_size.x / 2 - (rarity.get_child(0).get_font(\"font\").get_string_size(rarity.get_child(0).text).x - rarity.get_child(0).get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * rarity.current_scale, title.rect_position.y + font_offset + 112 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + (font_offset + 8) * title.get_child(0).text.count(\"\\\\n\"))
+			elif int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
+				rarity.rect_position = Vector2(background.rect_size.x / 2 - (rarity.get_child(0).get_font(\"font\").get_string_size(rarity.get_child(0).text).x - 24) * cjk_mod / 2 * rarity.current_scale, title.rect_position.y + font_offset + 112 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + (font_offset + 8) * title.get_child(0).text.count(\"\\\\n\"))
+			else:
+				rarity.rect_position = Vector2(background.rect_size.x / 2 - (rarity.get_font(\"font\").get_string_size(rarity.text).x - rarity.get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * rarity.current_scale, title.rect_position.y + font_offset + 100 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + (font_offset + 8) * title.text.count(\"\\\\n\"))
+		
+		if data.has(\"growth_turns\"):
+			value.raw_string = \"Needs <icon_rain><color_388BFF>\" + str(data.water_needed) + \"<end>/<icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>\"
+			value.values = [data.growth_turns]
+			
+			value.force_update = true
+			value.update()
+			
+			if cjk:
+				value.rect_position.x = background.rect_size.x / 2 - value.get_font(\"font\").get_string_size(value.get_child(0).text).x * cjk_mod / 2 * value.current_scale
+			elif int($\"/root/Main/Options Sprite/Options\".display_font) == 1:
+				value.rect_position.x = background.rect_size.x / 2 - (value.get_child(0).get_font(\"font\").get_string_size(value.get_child(0).text).x - value.get_child(0).get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * value.current_scale
+			elif int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
+				value.rect_position.x = background.rect_size.x / 2 - (value.get_child(0).get_font(\"font\").get_string_size(value.get_child(0).text).x - 24) * cjk_mod / 2 * value.current_scale
+			else:
+				value.rect_position.x = background.rect_size.x / 2 - (value.get_font(\"font\").get_string_size(value.text).x - value.get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * value.current_scale
+			
+			if rarity.raw_string != \"\":
+				value.rect_position.y = rarity.rect_position.y + font_offset
+				if cjk:
+					description.rect_position.y = value.rect_position.y + font_offset * 1.5 - 6 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+				elif int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+					description.rect_position.y = value.rect_position.y + font_offset * 1.5 + 6 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+				else:
+					description.rect_position.y = value.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+			else:
+				value.rect_position.y = title.rect_position.y + font_offset + 8 + (font_offset + 8) * title.text.count(\"\\\\n\")
+				if cjk:
+					description.rect_position.y = value.rect_position.y + font_offset * 2 - 32 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+				else:
+					description.rect_position.y = value.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+			if title.raw_string == \"\":
+				if cjk:
+					value.rect_position.y -= 68 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+				else:
+					value.rect_position.y -= 44 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+		elif rarity.raw_string != \"\":
+			if cjk:
+				description.rect_position.y = rarity.rect_position.y + font_offset * 2 - 24 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+			else:
+				description.rect_position.y = rarity.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+		else:
+			if cjk:
+				description.rect_position.y = title.rect_position.y + font_offset * 2 - 32 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+			else:
+				description.rect_position.y = title.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+		description.raw_string = data.text
+		if int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
+			description.rect_position.x = 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+		else:
+			description.rect_position.x = 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+		
+		description.force_update = true
+		if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+			description.base_scale = 0.5
+		description.change_set_size(description.base_scale)
+		description.update()
+
+		if description.raw_string != \"\":
+			separator.clear_points()
+			if int($\"/root/Main/Options Sprite/Options\".display_font) == 0:
+				separator.add_point(Vector2(16, description.rect_position.y - 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections))
+				separator.add_point(Vector2(background.rect_size.x - 16, description.rect_position.y - 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections))
+			else:
+				separator.add_point(Vector2(16, description.rect_position.y - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections))
+				separator.add_point(Vector2(background.rect_size.x - 16, description.rect_position.y - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections))
+		else:
+			if cjk:
+				background.rect_size.y = value.rect_position.y + (value.get_font(\"font\").get_height() * value.current_scale) * value.get_child(0).get_line_count() + 8
+			elif int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+				background.rect_size.y = value.rect_position.y + (value.get_child(0).get_font(\"font\").get_height() * value.current_scale) * (value.get_child(0).text.count(\"\\\\n\") + 1.25)
+			else:
+				background.rect_size.y = value.rect_position.y + ((value.get_font(\"font\").get_height() * value.current_scale * 4.0) + value.current_scale * 4.0 * (3 + 1.0 / 9.0)) * value.get_line_count()
+		if cjk:
+			if description.raw_string != \"\":
+				background.rect_size.y = description.rect_position.y + ((description.get_font(\"font\").get_height() * description.current_scale) * description.get_child(0).get_line_count() + 8)
+			elif rarity.raw_string != \"\":
+				background.rect_size.y = 296 * ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 0.25)
+			if title.raw_string == \"\":
+				value.rect_position.y += 8 * ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 0.25)
+		elif description.raw_string != \"\":
+			if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+				background.rect_size.y = description.rect_position.y + ((description.get_child(0).get_font(\"font\").get_height() * description.current_scale)) * (description.get_child(0).text.count(\"\\\\n\") + 1.25)
+			else:
+				background.rect_size.y = description.rect_position.y + ((description.get_font(\"font\").get_height() * description.current_scale * 4.0) + description.current_scale * 4.0 * (3 + 1.0 / 9.0)) * description.get_line_count()
+		if data.type == \"missing\" or data.type == \"item_missing\":
+			if cjk:
+				background.rect_size.y += value.rect_position.y + (value.get_font(\"font\").get_height() * value.current_scale) * value.get_child(0).get_line_count() + 8
+			else:
+				background.rect_size.y += $\"Icon\".texture.get_size().y * $\"Icon\".scale.y
+		elif rarity.raw_string == \"\" and description.raw_string == \"\":
+			if cjk:
+				background.rect_size.y -= 104 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+			else:
+				background.rect_size.y -= 68 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+		background.rect_size.y += extra_height
+		if $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections > 1:
+			border.rect_position = Vector2(background.rect_position.x - 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, background.rect_position.y - 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+			border.rect_size = Vector2(background.rect_size.x + 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, background.rect_size.y + 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+		else:
+			border.rect_position = Vector2(background.rect_position.x - 4, background.rect_position.y - 4)
+			border.rect_size = Vector2(background.rect_size.x + 8, background.rect_size.y + 8)
+	else:
+		description.raw_string = data.text
+		description.change_font_size(font_size_value, true)
+		description.rect_position = Vector2(8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+		if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
+			font_offset = (description.get_child(0).get_font(\"font\").get_height() - description.get_child(0).get_font(\"font\").extra_spacing_top) * description.rect_scale.y
+		else:
+			font_offset = (description.get_font(\"font\").get_height() - description.get_font(\"font\").extra_spacing_top) * description.rect_scale.y
+		if cjk:
+			background.rect_size.y = description.rect_position.y + (font_offset - 16) * description.get_child(0).get_line_count()
+		else:
+			background.rect_size.y = 16 + description.rect_position.y + font_offset * description.get_line_count() * 2
+		background.rect_size.y += extra_height
+		if $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections > 1:
+			border.rect_position = Vector2(background.rect_position.x - 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, background.rect_position.y - 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+			border.rect_size = Vector2(background.rect_size.x + 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, background.rect_size.y + 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
+		else:
+			border.rect_position = Vector2(background.rect_position.x - 4, background.rect_position.y - 4)
+			border.rect_size = Vector2(background.rect_size.x + 8, background.rect_size.y + 8)
+	description.update()
+	update_hitboxes()
+
+func update():
+	rect_size = background.rect_size
+	if delay <= 0 and get_parent().visible:
+		if (hovering and (not OS.is_window_focused() or ($\"/root/Main\".mouse_position.x < border.rect_global_position.x or $\"/root/Main\".mouse_position.x > border.rect_global_position.x + border.rect_size.x or $\"/root/Main\".mouse_position.y < border.rect_global_position.y or $\"/root/Main\".mouse_position.y > border.rect_global_position.y + border.rect_size.y)) or not OS.is_window_focused()):
+			unhover()
+			hovering = false
+		elif not hovering and OS.is_window_focused() and not ($\"/root/Main\".mouse_position.x < border.rect_global_position.x or $\"/root/Main\".mouse_position.x > border.rect_global_position.x + border.rect_size.x or $\"/root/Main\".mouse_position.y < border.rect_global_position.y or $\"/root/Main\".mouse_position.y > border.rect_global_position.y + border.rect_size.y):
+			hover()
+
+func hover():
+	hovering = true
+	background.color = \"0E7570\"
+
+func unhover():
+	hovering = false
+	background.color = \"094643\"
+
+func update_hitboxes():
+	var desc = $\"Background/Description\"
+	if desc.texts.size() > 0:
+		for i in desc.texts[8].icons:
+			i.active = true
+			i.update_hitbox()
+			i.source = self
+	else:
+		for i in desc.icons:
+			i.update_hitbox()
+			i.source = self
+"
+
+[sub_resource type="GDScript" id=2]
+script/source = "extends ColorRect
+
+var tooltip_card = false
+"
+
+[node name="Card" type="Control" groups=["Anim Update", "Selectable"]]
+script = SubResource( 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Border" type="ColorRect" parent="."]
+mouse_filter = 1
+color = Color( 0, 0, 0, 1 )
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="Background" type="ColorRect" parent="."]
+margin_right = 300.0
+mouse_filter = 2
+color = Color( 0.0352941, 0.27451, 0.262745, 1 )
+script = SubResource( 2 )
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="Title" parent="Background" instance=ExtResource( 1 )]
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_bottom = 10.0
+align = 1
+
+[node name="Rarity" parent="Background" instance=ExtResource( 1 )]
+
+[node name="Value" parent="Background" instance=ExtResource( 1 )]
+margin_bottom = 7.0
+
+[node name="Description" parent="Background" instance=ExtResource( 1 )]
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_bottom = 10.0
+
+[node name="Separator" type="Line2D" parent="."]
+width = 4.0
+default_color = Color( 0, 0, 0, 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Icon" parent="." groups=["Anim Update"] instance=ExtResource( 2 )]
+scale = Vector2( 8, 8 )
+z_index = 7

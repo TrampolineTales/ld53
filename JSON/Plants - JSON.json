@@ -1,0 +1,37 @@
+{
+  "bomb": {
+    "name": "Bomb Plant",
+    "text": "Destroys adjacent plants when fully grown.",
+    "rarity": "common",
+    "growth_turns": "",
+    "water_needed": ""
+  },
+  "cactus": {
+    "name": "Cactus",
+    "text": "",
+    "rarity": "common",
+    "growth_turns": "",
+    "water_needed": ""
+  },
+  "herbivorous": {
+    "name": "Herbivorous",
+    "text": "Needs seeds instead of water.",
+    "rarity": "common",
+    "growth_turns": "",
+    "water_needed": ""
+  },
+  "twolip": {
+    "name": "Twolip",
+    "text": "Doubles something",
+    "rarity": "common",
+    "growth_turns": "",
+    "water_needed": ""
+  },
+  "water_lily": {
+    "name": "Water Lily",
+    "text": "Gives X water when fully grown.",
+    "rarity": "common",
+    "growth_turns": "",
+    "water_needed": ""
+  }
+}

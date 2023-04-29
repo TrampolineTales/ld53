@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="GDScript" id=3]
+script/source = "extends Node2D
+
+var grid = []
+var grid_size = Vector2(32, 14)
+var water = 5
+
+func _ready():
+	for x in grid_size.x:
+		grid.push_back([])
+		for y in grid_size.y:
+			grid[x].push_back(load(\"res://Hover Icon.tscn\").instance())
+			grid[x][y].type = \"dirt\" + str(floor(rand_range(1, 9)))
+			grid[x][y].rect_position = Vector2(x * 32, y * 32 + 64)
+			add_child(grid[x][y])
+			grid[x][y].update_hitbox()
+"
+
+[node name="Garden" type="Node2D"]
+script = SubResource( 3 )
