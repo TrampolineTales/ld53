@@ -1,0 +1,143 @@
+[gd_scene load_steps=3 format=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node2D
+
+var d_time = 0.0
+var mouse_position = Vector2(0, 0)
+var press_timer = 0
+
+func _ready():
+	var button = preload(\"res://TT Button.tscn\").instance()
+	button.button_text = \"asdf\"
+	button.color = Color(255, 255, 255, 255)
+	button.call = \"test\"
+	button.target = self
+	add_child(button)
+
+func test():
+	$\"Background\".color = Color(255, 255, 255, 255)
+
+func _process(delta):
+	d_time += delta
+	while d_time >= 1.0/60.0:
+		mouse_position = get_global_mouse_position()
+		d_time -= 1.0/60.0
+		for node in get_tree().get_nodes_in_group(\"Anim Update\"):
+			node.call(\"update\")
+"
+
+[sub_resource type="GDScript" id=2]
+script/source = "extends Control
+
+var menu_buttons = []
+var disabled_mods = []
+var option_types = []
+var option_buttons = []
+var dropdown_buttons = []
+var option_texts = []
+var option_sliders = []
+var hyperlinks = []
+var slider_texts = []
+var slider_lines = []
+var base_y_positions = []
+var lowest_y_position = 0
+var lowest_y_size = 0
+var lowest_global_pos_y = 0
+var back_button
+var reset_button
+var exit_button
+var header_text
+var y_offset = 58
+var dropdown = false
+var can_update_scrollables = false
+var saved_scroll_bar_pos_y = 1
+var spacing_offset = 10
+var button_offset = 0
+var top_offset = 0
+var hotkey_offset = 0
+var reset_pos = 0
+
+var source_button
+
+var framerates = [30, 60, 120, 144, 240, tr(\"uncapped\")]
+var languages = [\"English\", \"Français\", \"Italiano\", \"Deutsch\", \"Español-España\", \"Español-Latinoamérica\", \"Português-Brasil\", \"Português-Europeu\", \"Русский\", \"polski\", \"Dansk\", \"Türkçe\", \"简体中文\", \"繁體中文\", \"日本語\", \"한국어\", \"Tiếng Việt\"]
+var language_codes = [\"en\", \"fr\", \"it\", \"de\", \"es_ES\", \"es\", \"pt_BR\", \"pt_PT\", \"ru\", \"pl\", \"da_DK\", \"tr\", \"zh\", \"zh_TW\", \"ja\", \"ko\", \"vi\"]
+var assignable_hotkeys = [\"confirm_select\", \"deny_cancel\", \"SPIN\", \"up\", \"down\", \"left\", \"right\", \"options\", \"inventory\", \"add_symbol_1\", \"add_symbol_2\", \"add_symbol_3\", \"skip\", \"use_reroll\", \"use_removal\", \"fast_forward\", \"enable_disable_item\", \"lock_tooltip\", \"inspect\", \"scroll_up\", \"scroll_down\"]
+var fonts = [\"SinsGold\", \"NotoSans\", \"OpenDyslexic\"]
+var input_types = [\"on_press\", \"on_release\"]
+var soundtrack_types = [\"old\", \"new\", \"both\"]
+var default_colors = {\"background\": \"FF8300\", \"reels\": \"FFFFFF\", \"symbol_bonus_text\": \"FBF236\", \"symbol_multiplier_text\": \"FBF236\", \"symbol_reminder_down_text\": \"E14A68\", \"symbol_reminder_up_text\": \"FBF236\", \"item_reminder_up_text\": \"FBF236\", \"item_reminder_down_text\": \"E14A68\", \"item_count_text\": \"61D3E3\", \"item_destroy_text\": \"7234BF\", \"inventory_background\": \"000000\", \"inventory_text\": \"FFFFFF\"}
+var colors3 = default_colors.duplicate(true)
+var ui_scaling = {\"text\": 1.0, \"reels_ui\": 1.0, \"items_ui\": 1.0, \"buttons\": 1.0, \"tooltips\": 1.0, \"emails\": 1.0, \"inventory\": 1.0, \"symbol_item_selections\": 1.0}
+var current_color
+var changing_languages = false
+var temp_color
+
+var language = null
+var CJK_lang = false
+var RTL_lang = false
+var resolution_x = 1024
+var resolution_y = 576
+var vsync = false
+var bordered_window = false
+var fullscreen = false
+var just_changed_osx_fullscreen = false
+var changing_osx_fullscreen = false
+var max_fps = 60
+var spin_speed = 1
+var spin_speed_offset = 0
+var animation_speed = 1
+var animation_speed_offset = 0
+var counting_speed = 1
+var counting_speed_offset = 0
+var menu_speed = 1
+var menu_speed_offset = 0
+var input_type = 0
+var display_font = 0
+var text_border = true
+var first_menu = false
+var digit_separators = true
+var scientific_notation = true
+var init_scaling_set = false
+var old_endless_mode = false
+var max_scaling = 0
+
+var master_volume = { \"goal_volume\": 0, \"value\": 100, \"muted\": false, }
+var music = { \"goal_volume\": 0, \"value\": 80, \"muted\": false, }
+var sfx = { \"goal_volume\": 0, \"value\": 80, \"muted\": false, }
+var tracks = { \"Old BGM #1\": [0, 0], \"Old BGM #2\": [0, 0], \"Old BGM #3\": [0, 0], \"Old BGM #4\": [0, 0], \"Old BGM #5\": [0, 0], \"Old BGM #6\": [0, 0], \"Old BGM #7\": [0, 0], \"Old BGM #8\": [0, 0], \"Banana Beats\": [1, 1], \"Big Man Zaroff\": [1, 1], \"Capsule Machine\": [1, 1], \"Hex of Funkiness\": [1, 1], \"Instant Ramen\": [1, 1], \"Rainbow Peppers\": [1, 1], \"Spin to Win!\": [1, 1], \"The Mouse Song\": [1, 1], \"Bird Whistle\": [0, 1], \"Essence Party\": [0, 1], \"Guillotine Dance\": [0, 1], \"Roll of the Dice\": [0, 1]}
+var track_names = []
+var mute_while_in_background = false
+
+var echo = false
+var deck_setting = false
+
+var hotkey_being_assigned
+var hotkey_button_being_assigned
+var le
+var done_assigning = true
+var done_assigning_timer = 2
+
+var hotkeys = {}
+var mod_dropdown_buttons = 0
+var displayed_mods = []
+var saved_modpack_keys = {}
+var starter_button
+var last_selector_button_pos
+"
+
+[node name="Main" type="Node2D"]
+script = SubResource( 1 )
+
+[node name="Background" type="ColorRect" parent="."]
+margin_right = 1024.0
+margin_bottom = 576.0
+color = Color( 0.545098, 0, 1, 1 )
+
+[node name="Options Sprite" type="Node2D" parent="."]
+
+[node name="Options" type="Control" parent="Options Sprite"]
+margin_right = 40.0
+margin_bottom = 40.0
+script = SubResource( 2 )
