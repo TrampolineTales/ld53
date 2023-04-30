@@ -19,6 +19,7 @@ var rarity_bonuses = { \"seeds\": { \"uncommon\": 1, \"rare\": 1, \"very_rare\":
 var seed_being_added = \"\"
 var time_until_seeds = 3
 var water_due = 0
+var new_water_due = 0
 var water_due_time = 12
 var pass_time_button
 var blurb_button
@@ -86,7 +87,7 @@ func _ready():
 	$\"Info3\".raw_string = \"Something Something Game Title\"
 	$\"Info2\".raw_string = \"A game by TrampolineTales\"
 	
-#	draw_tutorial()
+	draw_tutorial()
 
 func reset():
 	get_tree().reload_current_scene()
@@ -96,9 +97,9 @@ func close_blurb():
 	tut_button_right.visible = false
 	blurb_button.visible = true
 	$\"Blurb Sprite\".visible = false
-	$\"Garden\".queued_water += $\"Garden\".round_water
-	$\"Garden\".round_water = 0
 	$\"Info\".visible = true
+	if tut_page == 10:
+		water_due = new_water_due
 	tut_page = 10
 
 func draw_tutorial():
@@ -106,7 +107,7 @@ func draw_tutorial():
 	if tut_page > 1:
 		$\"Blurb Sprite/Image\".texture = load(\"res://icons/tut_\" + str(tut_page - 1) + \".png\")
 	else:
-		$\"Blurb Sprite/Image\".texture = preload(\"res://icons/planted.png\")
+		$\"Blurb Sprite/Image\".texture = null
 	$\"Blurb Sprite/Blurb/Text\".custom_max_width = $\"Blurb Sprite/Blurb\".rect_size.x - 340
 	$\"Blurb Sprite/Blurb/Text\".raw_string = \"Tutorial (\" + str(tut_page) + \"/9)\\n\"
 	match tut_page:
@@ -189,6 +190,9 @@ func pass_time():
 			rarity_chances = { \"seeds\": { \"uncommon\": 0.4, \"rare\": 0.03, \"very_rare\": 0.015 } }
 	for x in $\"Garden\".grid_size.x:
 		for y in $\"Garden\".grid_size.y:
+			$\"Garden\".grid[x][y].do_full_check = true
+	for x in $\"Garden\".grid_size.x:
+		for y in $\"Garden\".grid_size.y:
 			if $\"Garden\".timers[x][y].get_child(0).raw_string.find(\"<icon_rain>\") != -1:
 				$\"Garden\".timers[x][y].get_child(0).raw_string = \"\"
 			$\"Garden\".grid[x][y].check_effects()
@@ -238,9 +242,15 @@ func _process(delta):
 		if water_due_time <= 0 and not $\"Blurb Sprite\".visible:
 			for x in $\"Garden\".grid_size.x:
 				for y in $\"Garden\".grid_size.y:
-					if $\"Garden\".grid[x][y].type == \"twolip\":
+					if $\"Garden\".grid[x][y].type == \"twolip\" and $\"Garden\".grid[x][y].growth >= $\"Garden\".grid[x][y].growth_turns:
 						for i in $\"Garden\".grid[x][y].get_adjacent_icons():
 							i.multiplier *= 2
+					elif $\"Garden\".grid[x][y].type == \"rainbow_rose\" and $\"Garden\".grid[x][y].growth >= $\"Garden\".grid[x][y].growth_turns:
+						var amount = 0
+						for i in $\"Garden\".grid[x][y].get_adjacent_icons():
+							if i.type != \"dirt\" and i.sells_for * i.multiplier > amount and i.growth >= i.growth_turns:
+								amount = i.sells_for * i.multiplier
+						$\"Garden\".grid[x][y].sells_for = amount
 			for x in $\"Garden\".grid_size.x:
 				for y in $\"Garden\".grid_size.y:
 					if $\"Garden\".grid[x][y].type != \"dirt\" and $\"Garden\".grid[x][y].growth >= $\"Garden\".grid[x][y].growth_turns:
@@ -267,22 +277,36 @@ func _process(delta):
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You did not reach your goal in time.\\nGAME OVER!\\n\\nTry again?\"
 				blurb_button.call = \"reset\"
 				blurb_button.target = self
-			elif water_due == 500:
-				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You reached every goal!\\nVICTORY!\\nYou delivered \" + str(plants_delivered) + \" plants.\\n\\nPlay again?\"
+			elif water_due == 600:
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You reached every goal!\\nVICTORY!\\nYou delivered \" + str(plants_delivered) + \" plants.\\nYou ended the game with <color_388BFF><icon_rain>\" + str($\"Garden\".water + $\"Garden\".queued_water + $\"Garden\".round_water) + \"<end>.\\n\\nPlay again?\"
 				blurb_button.call = \"reset\"
 				blurb_button.target = self
 			elif $\"Garden\".round_water > 0:
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You delivered \" + get_produced_plants() + \" to us, which helped feed our friends and families. We are sending you <color_388BFF><icon_rain>\" + str($\"Garden\".round_water) + \"<end> to help others in need.\\nKeep it up!\"
 			else:
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You didn\\'t deliver any plants to us this time...\"
-			water_due += 50
-			if water_due == 300 or water_due == 450:
-				water_due += 50
+			$\"Garden\".queued_water += $\"Garden\".round_water
+			$\"Garden\".round_water = 0
 			if blurb_button.call != \"reset\":
-				if water_due == 500:
-					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour FINAL goal is <icon_rain><color_388BFF>\" + str(water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
+				match plant_deliveries:
+					0:
+						new_water_due = 75
+					1:
+						new_water_due = 125
+					2:
+						new_water_due = 200
+					3:
+						new_water_due = 250
+					4:
+						new_water_due = 350
+					5:
+						new_water_due = 400
+					6:
+						new_water_due = 600
+				if new_water_due == 600:
+					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour FINAL goal is <icon_rain><color_388BFF>\" + str(new_water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
 				else:
-					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour new goal is <icon_rain><color_388BFF>\" + str(water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
+					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour new goal is <icon_rain><color_388BFF>\" + str(new_water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
 			water_due_time = 12
 			plant_deliveries += 1
 		elif time_until_seeds <= 0 and seed_being_added == \"\" and not $\"Cards\".visible and not $\"Blurb Sprite\".visible:

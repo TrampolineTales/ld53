@@ -38,6 +38,8 @@ var every
 var sells_for
 var growth_turns
 
+var do_full_check = true
+
 func _free_if_orphaned():
 	if not is_inside_tree():
 		queue_free()
@@ -120,6 +122,14 @@ func hover():
 		if ($\"/root/Main\".seed_being_added != \"\" and $\"/root/Main\".seed_being_added != \"squash\" and not $\"/root/Main/\".tile_database.has(type)) or ($\"/root/Main\".seed_being_added == \"squash\" and $\"/root/Main/\".tile_database.has(type)):
 			$\"Rectangle\".visible = true
 			hovering = true
+			var tooltip = load(\"res://Tooltip.tscn\").instance()
+			var database = $\"/root/Main/\".tile_database
+			if not database.has(type):
+				return
+			tooltip.get_child(0).data = database[type]
+			tooltip.source = get_parent().get_parent().get_parent()
+			tooltip.origin = self
+			tooltips.add_child(tooltip)
 		elif can_add_tooltip():
 			hovering = true
 			var tooltip = load(\"res://Tooltip.tscn\").instance()
@@ -192,75 +202,106 @@ func get_adjacent_icons():
 func check_effects():
 	if type != \"dirt\":
 		growth += 1
-		if every == 0 or int(growth) % int(every) == 0:
-			var water_mod = 0
-			for i in get_adjacent_icons():
-				if i.type == \"sprinkler\" or i.type == \"pitcher\":
-					water_mod -= 1
-				elif i.type == \"mega_sprinkler\":
-					water_mod -= 3
-			var water_taken = water_needed + water_mod
-			if water_taken < 0:
-				water_taken = 0
-			$\"/root/Main/Garden\".queued_water -= water_taken
-			if water_taken != 0:
-				$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>\" + str(-water_taken) + \"<end>\"
-		if type == \"sunflower\":
-			var no_sunflower = true
-			for i in get_adjacent_icons():
-				if i.type == \"sunflower\":
-					no_sunflower = false
-					break
-			if no_sunflower:
-				growth -= 1
-		if type != \"dirt\" and growth >= growth_turns:
-			sprite.set_type(type)
-			match type:
-				\"crabgrass\":
-					if grid_position.x > 0:
-						if $\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].type == \"dirt\":
-							$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].sprite.set_type(\"crabgrass\")
-							$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].change_type(\"crabgrass\")
-					if grid_position.x < $\"/root/Main/Garden\".grid_size.x - 1:
-						if $\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].type == \"dirt\":
-							$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].sprite.set_type(\"crabgrass\")
-							$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].change_type(\"crabgrass\")
-				\"clover\":
-					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"uncommon\"] *= 1.1
-					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"rare\"] *= 1.1
-					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"very_rare\"] *= 1.1
-				\"mint\":
-					randomize()
-					if rand_range(0, 1) < 0.5:
+		if do_full_check:
+			if every == 0 or int(growth) % int(every) == 0:
+				var water_mod = 0
+				for i in get_adjacent_icons():
+					if (i.type == \"sprinkler\" or i.type == \"pitcher\") and i.growth >= i.growth_turns:
+						water_mod -= 1
+					elif i.type == \"mega_sprinkler\" and i.growth >= i.growth_turns:
+						water_mod -= 3
+				var water_taken = water_needed + water_mod
+				if water_taken < 0:
+					water_taken = 0
+				$\"/root/Main/Garden\".queued_water -= water_taken
+				if water_taken != 0:
+					$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>\" + str(-water_taken) + \"<end>\"
+			if type == \"sunflower\":
+				var no_sunflower = true
+				for i in get_adjacent_icons():
+					if i.type == \"sunflower\":
+						no_sunflower = false
+						break
+				if no_sunflower:
+					growth -= 1
+			if type != \"dirt\" and growth >= growth_turns:
+				sprite.set_type(type)
+				match type:
+					\"crabgrass\":
+						if grid_position.x > 0:
+							if $\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].type == \"dirt\":
+								$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].sprite.set_type(\"planted\")
+								$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].change_type(\"crabgrass\")
+								$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].do_full_check = false
+								$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].check_effects()
+						if grid_position.x < $\"/root/Main/Garden\".grid_size.x - 1:
+							if $\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].type == \"dirt\":
+								$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].sprite.set_type(\"planted\")
+								$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].change_type(\"crabgrass\")
+								$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].do_full_check = false
+								$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].check_effects()
+					\"clover\":
+						$\"/root/Main\".rarity_bonuses[\"seeds\"][\"uncommon\"] *= 1.1
+						$\"/root/Main\".rarity_bonuses[\"seeds\"][\"rare\"] *= 1.1
+						$\"/root/Main\".rarity_bonuses[\"seeds\"][\"very_rare\"] *= 1.1
+					\"mint\":
 						randomize()
-						var arr = get_adjacent_icons()
-						arr.shuffle()
-						for i in get_adjacent_icons():
-							if i.type == \"dirt\":
-								i.sprite.set_type(\"planted\")
-								i.change_type(\"mint\")
-								break
-				\"water_lily\":
-					$\"/root/Main/Garden\".queued_water += 2
-					$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>+2<end>\"
-				\"herbivorous\":
-					if int(growth - growth_turns) % 3 == 0 and growth > growth_turns:
-						var destroyed_something = false
+						if rand_range(0, 1) < 0.5:
+							randomize()
+							var arr = get_adjacent_icons()
+							arr.shuffle()
+							for i in get_adjacent_icons():
+								if i.type == \"dirt\":
+									i.sprite.set_type(\"planted\")
+									i.change_type(\"mint\")
+									break
+					\"dandelion\":
 						randomize()
-						var arr = get_adjacent_icons()
-						arr.shuffle()
-						for i in arr:
-							if i.type != \"dirt\":
-								destroyed_something = true
-								i.sprite.set_type(\"dirt\")
-								i.change_type(\"dirt\")
-								$\"/root/Main/Garden\".timers[i.grid_position.x][i.grid_position.y].get_child(0).raw_string = \"\"
-								break
-						if not destroyed_something:
-							sprite.set_type(\"dirt\")
-							change_type(\"dirt\")
-		elif $\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string.find(\"<icon_rain>\") == -1:
-			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str(growth_turns - growth) + \"<end>\"
+						if rand_range(0, 1) < 0.1:
+							randomize()
+							var arr = get_adjacent_icons()
+							arr.shuffle()
+							for i in get_adjacent_icons():
+								if i.type == \"dirt\":
+									i.sprite.set_type(\"planted\")
+									i.change_type(\"dandelion\")
+									break
+					\"water_lily\":
+						$\"/root/Main/Garden\".queued_water += 2
+						$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>+2<end>\"
+					\"herbivorous\":
+						if int(growth - growth_turns) % 3 == 0 and growth > growth_turns:
+							var destroyed_something = false
+							randomize()
+							var arr = get_adjacent_icons()
+							arr.shuffle()
+							for i in arr:
+								if i.type != \"dirt\":
+									destroyed_something = true
+									i.sprite.set_type(\"dirt\")
+									i.change_type(\"dirt\")
+									$\"/root/Main/Garden\".timers[i.grid_position.x][i.grid_position.y].get_child(0).raw_string = \"\"
+									break
+							if not destroyed_something:
+								sprite.set_type(\"dirt\")
+								change_type(\"dirt\")
+					\"bamboo\":
+						if grid_position.y > 0:
+							if $\"/root/Main/Garden\".grid[grid_position.x][grid_position.y - 1].type == \"dirt\":
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y - 1].sprite.set_type(\"planted\")
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y - 1].change_type(\"bamboo\")
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y - 1].do_full_check = false
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y - 1].check_effects()
+						if grid_position.y < $\"/root/Main/Garden\".grid_size.y - 1:
+							if $\"/root/Main/Garden\".grid[grid_position.x][grid_position.y + 1].type == \"dirt\":
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y + 1].sprite.set_type(\"planted\")
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y + 1].change_type(\"bamboo\")
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y + 1].do_full_check = false
+								$\"/root/Main/Garden\".grid[grid_position.x][grid_position.y + 1].check_effects()
+			elif $\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string.find(\"<icon_rain>\") == -1:
+				$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str(growth_turns - growth) + \"<end>\"
+		if growth_turns - growth == 0:
+			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"\"
 "
 
 [node name="Hover Icon" type="Control" groups=["Anim Update", "Selectable"]]

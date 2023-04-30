@@ -1,4 +1,13 @@
 {
+  "bamboo": {
+    "name": "Bamboo",
+    "text": "Adds <icon_bamboo> above and below itself each <icon_time>.",
+    "rarity": "rare",
+    "growth_turns": 0,
+    "water_needed": 1,
+    "every": 1,
+    "sells_for": 8
+  },
   "cactus": {
     "name": "Cactus",
     "text": "",
@@ -19,12 +28,21 @@
   },
   "crabgrass": {
     "name": "Crabgrass",
-    "text": "Adds <icon_crabgrass> to the left and right of it.",
+    "text": "Adds <icon_crabgrass> to the left and right of itself each <icon_time>.",
     "rarity": "rare",
-    "growth_turns": 2,
+    "growth_turns": 0,
     "water_needed": 1,
     "every": 1,
-    "sells_for": 10
+    "sells_for": 8
+  },
+  "dandelion": {
+    "name": "Dandelion",
+    "text": "Has a <color_E14A68>10%<end> chance of adding a <icon_dandelion> seed each <icon_time>.",
+    "rarity": "common",
+    "growth_turns": 2,
+    "water_needed": 0,
+    "every": 0,
+    "sells_for": 5
   },
   "ghost_fern": {
     "name": "Ghost Fern",
@@ -80,6 +98,15 @@
     "every": 2,
     "sells_for": 30
   },
+  "rainbow_rose": {
+    "name": "Rainbow Rose",
+    "text": "When delivered, gives <icon_rain> equal to the highest delivery amount among adjacent plants.",
+    "rarity": "rare",
+    "growth_turns": 0,
+    "water_needed": 0,
+    "every": 0,
+    "sells_for": 0
+  },
   "sprinkler": {
     "name": "Sprinkler",
     "text": "Adjacent plants get <icon_rain><color_388BFF>1<end>/<icon_time><color_FF0037>1<end>.",
@@ -96,7 +123,7 @@
     "growth_turns": 4,
     "water_needed": 1,
     "every": 1,
-    "sells_for": 30
+    "sells_for": 40
   },
   "strawberry": {
     "name": "Strawberry",
@@ -115,6 +142,15 @@
     "water_needed": 1,
     "every": 2,
     "sells_for": 30
+  },
+  "turnip": {
+    "name": "Turnip",
+    "text": "",
+    "rarity": "common",
+    "growth_turns": 3,
+    "water_needed": 1,
+    "every": 2,
+    "sells_for": 10
   },
   "twolip": {
     "name": "Twolip",
