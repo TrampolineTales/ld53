@@ -1125,7 +1125,7 @@ func change_font_size(s, do_update):
 
 func update():
 	if (raw_string != saved_text or force_update or size_update or line_update) and is_inside_tree() and not off_screen and not $\"/root/Main/Options Sprite/Options\".changing_languages:
-		if raw_string.length() != saved_text.length() or force_update or size_update:
+		if raw_string.length() != saved_text.length() or force_update or size_update or need_to_center:
 			remove_icons(true)
 		else:
 			remove_icons(false)
@@ -1212,8 +1212,7 @@ func update():
 				rect_position.x += font.get_string_size(text_str).x * saved_scale * font_mod - font.get_string_size(text_str).x * current_scale * font_mod
 			saved_scale = current_scale
 		if need_to_center:
-			rect_position.x = get_parent().rect_size.x / 2 - font.get_string_size(raw_string).x * rect_scale.x
-			need_to_center = false
+			rect_position.x = -font.get_string_size(text_str).x
 "
 
 [node name="Outline Label" type="Label" groups=["Aligned", "Anim Update", "Pause Update 2", "UI - Text"]]

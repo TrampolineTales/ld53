@@ -290,10 +290,8 @@ func set_card_size():
 				description.rect_position.y = title.rect_position.y + font_offset * 2 - 32 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
 			else:
 				description.rect_position.y = title.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
-		if data.type == \"squash\":
-			description.raw_string = data.text
-		elif data.text != \"\":
-			description.raw_string = \"<color_FF0037>After <icon_time>\" + str(data.growth_turns) + \"<end>:\\n\" + data.text
+		if data.text != \"\":
+			description.raw_string = \"Fully grown after <icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>.\\n\" + data.text
 		elif data.growth_turns > 0:
 			description.raw_string = \"Fully grown after <icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>.\"
 		if int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
@@ -352,10 +350,8 @@ func set_card_size():
 			border.rect_position = Vector2(background.rect_position.x - 4, background.rect_position.y - 4)
 			border.rect_size = Vector2(background.rect_size.x + 8, background.rect_size.y + 8)
 	else:
-		if data.type == \"squash\":
-			description.raw_string = data.text
-		elif data.text != \"\":
-			description.raw_string = \"<color_FF0037>After <icon_time>\" + str(data.growth_turns) + \"<end>:\\n\" + data.text
+		if data.text != \"\":
+			description.raw_string = \"Fully grown after <icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>.\\n\" + data.text
 #			if data.decay_turns != 0:
 #				description.raw_string += \"\\nTakes an extra <icon_time><color_FF0037>\" + str(data.decay_turns) + \"<end> to harvest.\"
 		elif data.growth_turns > 0:

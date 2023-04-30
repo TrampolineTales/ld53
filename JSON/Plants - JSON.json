@@ -7,17 +7,17 @@
     "water_needed": 2,
     "decay_turns": 0,
     "every": 5,
-    "sells_for": 10
+    "sells_for": 15
   },
   "clover": {
     "name": "Clover",
     "text": "You are <color_E14A68>1.1x<end> more likely to find <color_38769A>Uncommon<end>, <color_F8F87B>Rare<end>, and <color_4A1369>Very Rare<end> seeds.",
     "rarity": "common",
-    "growth_turns": 5,
+    "growth_turns": 6,
     "water_needed": 2,
     "decay_turns": 10,
     "every": 3,
-    "sells_for": 7
+    "sells_for": 9
   },
   "ghost_fern": {
     "name": "Ghost Fern",
@@ -31,13 +31,13 @@
   },
   "herbivorous": {
     "name": "Herbivorous",
-    "text": "Needs <icon_seed><color_57821D>1<end>/<icon_time><color_FF0037>2<end>.",
-    "rarity": "uncommon",
-    "growth_turns": 6,
+    "text": "Destroys a random adjacent plant every <icon_time><color_FF0037>3<end>. Destroys itself if it can't.",
+    "rarity": "rare",
+    "growth_turns": 0,
     "water_needed": 0,
     "decay_turns": 0,
     "every": 0,
-    "sells_for": 25
+    "sells_for": 66
   },
   "mega_sprinkler": {
     "name": "Mega Sprinkler",
@@ -51,13 +51,13 @@
   },
   "mint": {
     "name": "Mint",
-    "text": "Has a <color_E14A68>25%<end> chance of adding a <icon_mint> seed each <icon_time>.",
+    "text": "Has a <color_E14A68>50%<end> chance of adding a <icon_mint> seed each <icon_time>.",
     "rarity": "very_rare",
-    "growth_turns": 4,
+    "growth_turns": 0,
     "water_needed": 0,
-    "decay_turns": 4,
+    "decay_turns": 3,
     "every": 0,
-    "sells_for": 2
+    "sells_for": 3
   },
   "sprinkler": {
     "name": "Sprinkler",
@@ -73,11 +73,11 @@
     "name": "Squash",
     "text": "Must be planted on another plant.",
     "rarity": "common",
-    "growth_turns": 6,
+    "growth_turns": 4,
     "water_needed": 1,
     "decay_turns": 0,
     "every": 1,
-    "sells_for": 20
+    "sells_for": 30
   },
   "strawberry": {
     "name": "Strawberry",
@@ -103,7 +103,7 @@
     "name": "Water Lily",
     "text": "Gives <icon_rain><color_388BFF>3<end>/<icon_time><color_FF0037>1<end>.",
     "rarity": "uncommon",
-    "growth_turns": 5,
+    "growth_turns": 2,
     "water_needed": 0,
     "decay_turns": 5,
     "every": 0,
@@ -113,10 +113,10 @@
     "name": "Watermelon",
     "text": "",
     "rarity": "very_rare",
-    "growth_turns": 9,
+    "growth_turns": 7,
     "water_needed": 1,
     "decay_turns": 0,
-    "every": 3,
-    "sells_for": 50
+    "every": 1,
+    "sells_for": 77
   }
 }

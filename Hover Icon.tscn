@@ -31,6 +31,7 @@ var selector_alignment = \"dont\"
 
 var growth = 0
 var grid_position = Vector2(0, 0)
+var multiplier = 1
 
 var water_needed
 var every
@@ -53,19 +54,19 @@ func _input(event):
 			$\"Rectangle\".visible = false
 			sprite.set_type(\"planted\")
 			change_type(type)
-			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str(growth_turns - growth) + \"<end>\"
+			if growth_turns - growth > 0:
+				if $\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string.find(\"<icon_rain>\") == -1:
+					$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str(growth_turns - growth) + \"<end>\"
+			else:
+				sprite.set_type(type)
 			$\"/root/Main\".seed_being_added = \"\"
-		elif $\"/root/Main\".seed_being_added == \"\":
-			sprite.set_type(\"dirt\")
-			if growth >= growth_turns:
-				$\"/root/Main/Garden\".water += sells_for
-			change_type(\"dirt\")
 
 func change_type(t):
 	$\"/root/Main/Cards\".visible = false
 	$\"Dirt\".visible = true
 	growth = 0
 	type = t
+	multiplier = 1
 	if t == \"dirt\":
 		water_needed = 0
 		every = 0
@@ -203,10 +204,20 @@ func check_effects():
 	if type != \"dirt\":
 		growth += 1
 		if every == 0 or int(growth) % int(every) == 0:
-			$\"/root/Main/Garden\".queued_water -= water_needed
+			var water_mod = 0
+			for i in get_adjacent_icons():
+				if i.type == \"sprinkler\":
+					water_mod -= 1
+				elif i.type == \"mega_sprinkler\":
+					water_mod -= 3
+			var water_taken = water_needed + water_mod
+			if water_taken < 0:
+				water_taken = 0
+			$\"/root/Main/Garden\".queued_water -= water_taken
+			if water_taken != 0:
+				$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>\" + str(-water_taken) + \"<end>\"
 		if type != \"dirt\" and growth >= growth_turns:
 			sprite.set_type(type)
-			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"\"
 			match type:
 				\"clover\":
 					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"uncommon\"] *= 1.1
@@ -225,8 +236,9 @@ func check_effects():
 								break
 				\"water_lily\":
 					$\"/root/Main/Garden\".queued_water += 3
+					$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>+3<end>\"
 				\"herbivorous\":
-					if int(growth - growth_turns) % 3 == 0 and growth != growth_turns:
+					if int(growth - growth_turns) % 3 == 0 and growth > growth_turns:
 						var destroyed_something = false
 						randomize()
 						var arr = get_adjacent_icons()
@@ -236,11 +248,12 @@ func check_effects():
 								destroyed_something = true
 								i.sprite.set_type(\"dirt\")
 								i.change_type(\"dirt\")
+								$\"/root/Main/Garden\".timers[i.grid_position.x][i.grid_position.y].get_child(0).raw_string = \"\"
 								break
 						if not destroyed_something:
 							sprite.set_type(\"dirt\")
 							change_type(\"dirt\")
-		else:
+		elif $\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string.find(\"<icon_rain>\") == -1:
 			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str(growth_turns - growth) + \"<end>\"
 "
 

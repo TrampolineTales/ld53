@@ -22,6 +22,7 @@ var water_due_time = 12
 var pass_time_button
 var blurb_button
 var plant_deliveries = 0
+var plants_delivered = 0
 
 func _ready():
 	var tile_file = File.new()
@@ -71,6 +72,7 @@ func close_blurb():
 func get_produced_plants():
 	var string = \"\"
 	for p in $\"Garden\".produced_plants:
+		plants_delivered += 1
 		string += \"<icon_\" + p + \">\"
 	$\"Garden\".produced_plants.clear()
 	return string
@@ -81,6 +83,7 @@ func pass_time():
 	$\"Info2\".force_update = true
 	time_until_seeds -= 1
 	$\"Info3\".force_update = true
+	$\"Garden\".timer_timer = 90
 	match plant_deliveries:
 		0:
 			pass
@@ -89,15 +92,17 @@ func pass_time():
 		2:
 			rarity_chances = { \"seeds\": { \"uncommon\": 0.3, \"rare\": 0.02, \"very_rare\": 0 } }
 		3:
-			rarity_chances = { \"seeds\": { \"uncommon\": 0.5, \"rare\": 0.02, \"very_rare\": 0 } }
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.3, \"rare\": 0.025, \"very_rare\": 0 } }
 		4:
-			rarity_chances = { \"seeds\": { \"uncommon\": 0.58, \"rare\": 0.03, \"very_rare\": 0.01 } }
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.38, \"rare\": 0.03, \"very_rare\": 0.01 } }
 		5:
-			rarity_chances = { \"seeds\": { \"uncommon\": 0.6, \"rare\": 0.03, \"very_rare\": 0.01 } }
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.4, \"rare\": 0.03, \"very_rare\": 0.01 } }
 		_:
-			rarity_chances = { \"seeds\": { \"uncommon\": 0.6, \"rare\": 0.03, \"very_rare\": 0.01 } }
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.4, \"rare\": 0.03, \"very_rare\": 0.015 } }
 	for x in $\"Garden\".grid_size.x:
 		for y in $\"Garden\".grid_size.y:
+			if $\"Garden\".timers[x][y].get_child(0).raw_string.find(\"<icon_rain>\") != -1:
+				$\"Garden\".timers[x][y].get_child(0).raw_string = \"\"
 			$\"Garden\".grid[x][y].check_effects()
 
 func add_seed(type):
@@ -117,6 +122,15 @@ func _process(delta):
 	d_time += delta
 	while d_time >= 1.0/60.0:
 		mouse_position = get_global_mouse_position()
+		$\"Garden\".timer_timer -= 1
+		if $\"Garden\".timer_timer == 0:
+			for x in $\"Garden\".grid_size.x:
+				for y in $\"Garden\".grid_size.y:
+					if $\"Garden\".grid[x][y].type != \"dirt\":
+						if $\"Garden\".grid[x][y].growth_turns - $\"Garden\".grid[x][y].growth > 0:
+							$\"Garden\".timers[x][y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str($\"Garden\".grid[x][y].growth_turns - $\"Garden\".grid[x][y].growth) + \"<end>\"
+						else:
+							$\"Garden\".timers[x][y].get_child(0).raw_string = \"\"
 		d_time -= 1.0/60.0
 		if $\"Garden\".queued_water > 0:
 			$\"Garden\".queued_water -= 1
@@ -131,8 +145,15 @@ func _process(delta):
 		if water_due_time <= 0 and not $\"Blurb Sprite\".visible:
 			for x in $\"Garden\".grid_size.x:
 				for y in $\"Garden\".grid_size.y:
+					if $\"Garden\".grid[x][y].type == \"twolip\":
+						for i in $\"Garden\".grid[x][y].get_adjacent_icons():
+							i.multiplier *= 2
+			for x in $\"Garden\".grid_size.x:
+				for y in $\"Garden\".grid_size.y:
 					if $\"Garden\".grid[x][y].type != \"dirt\" and $\"Garden\".grid[x][y].growth >= $\"Garden\".grid[x][y].growth_turns:
-						$\"Garden\".round_water += $\"Garden\".grid[x][y].sells_for
+						if $\"Garden\".grid[x][y].sells_for * $\"Garden\".grid[x][y].multiplier > 0:
+							$\"Garden\".round_water += $\"Garden\".grid[x][y].sells_for * $\"Garden\".grid[x][y].multiplier
+							$\"Garden\".timers[x][y].get_child(0).raw_string = \"<color_388BFF><icon_rain>+\" + str($\"Garden\".grid[x][y].sells_for * $\"Garden\".grid[x][y].multiplier) + \"<end>\"
 						$\"Garden\".produced_plants.push_back($\"Garden\".grid[x][y].type)
 						if $\"Garden\".grid[x][y].type == \"ghost_fern\":
 							randomize()
@@ -151,13 +172,20 @@ func _process(delta):
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You did not reach your goal in time.\\nGAME OVER!\\n\\nTry again?\"
 				blurb_button.call = \"reset\"
 				blurb_button.target = self
+			elif water_due == 500:
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You reached every goal!\\nVICTORY!\\nYou delivered \" + str(plants_delivered) + \" plants.\\n\\nPlay again?\"
+				blurb_button.call = \"reset\"
+				blurb_button.target = self
 			elif $\"Garden\".round_water > 0:
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You delivered \" + get_produced_plants() + \" to us, which helped feed our friends and families. We are sending you <color_388BFF><icon_rain>\" + str($\"Garden\".round_water) + \"<end> to help others in need.\\nKeep it up!\"
 			else:
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You didn\\'t deliver any plants to us this time...\"
 			water_due += 50
 			if blurb_button.call != \"reset\":
-				$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour new goal is <icon_rain><color_388BFF>\" + str(water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in a Game Over.\"
+				if water_due == 500:
+					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour FINAL goal is <icon_rain><color_388BFF>\" + str(water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
+				else:
+					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour new goal is <icon_rain><color_388BFF>\" + str(water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
 			water_due_time = 12
 			plant_deliveries += 1
 		elif time_until_seeds <= 0 and seed_being_added == \"\" and not $\"Cards\".visible and not $\"Blurb Sprite\".visible:
