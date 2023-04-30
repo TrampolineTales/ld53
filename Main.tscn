@@ -84,7 +84,7 @@ func _ready():
 	pass_time_button.target = self
 	add_child(pass_time_button)
 	
-	$\"Info3\".raw_string = \"Something Something Game Title\"
+	$\"Info3\".raw_string = \"Plenty of Plants\"
 	$\"Info2\".raw_string = \"A game by TrampolineTales\"
 	
 	draw_tutorial()
@@ -112,7 +112,8 @@ func draw_tutorial():
 	$\"Blurb Sprite/Blurb/Text\".raw_string = \"Tutorial (\" + str(tut_page) + \"/9)\\n\"
 	match tut_page:
 		1:
-			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Welcome to GAME NAME! something here's the goal.\"
+			$\"Blurb Sprite/Blurb/Text\".custom_max_width = null
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Welcome to Pleny of Plants! You have been cursed and will die of thirst very soon. Deliver us plants so we can eat them. In return, we\\'ll deliver <icon_rain> to you and satisfy your endless thirst.\"
 		2:
 			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Every plant has different characteristics.\"
 		3:
@@ -122,12 +123,13 @@ func draw_tutorial():
 		5:
 			$\"Blurb Sprite/Blurb/Text\".raw_string += \"And how frequently it takes <icon_rain>.\"
 		6:
-			$\"Blurb Sprite/Blurb/Text\".raw_string += \"How much <icon_rain> you get back when the plant is delivered.\"
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"There\\'s also how much <icon_rain> you get when the plant is delivered.\"
 		7:
 			$\"Blurb Sprite/Blurb/Text\".raw_string += \"How long it takes the plant to be deliverable.\"
 		8:
 			$\"Blurb Sprite/Blurb/Text\".raw_string += \"And any effects the plant has while in a deliverable state.\"
 		9:
+			$\"Blurb Sprite/Blurb/Text\".custom_max_width = null
 			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Press the <icon_time><color_FF0037>1<end> button (in the bottom-right) to pass time.\\nNow go deliver some plants!\"
 	if tut_page == 9:
 		tut_button_right.button_text = \"<icon_confirm>\"
@@ -274,15 +276,15 @@ func _process(delta):
 			if tut_page >= 9:
 				$\"Blurb Sprite/Blurb/Text\".custom_max_width = null
 			if $\"Garden\".water + $\"Garden\".queued_water + $\"Garden\".round_water < water_due:
-				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You did not reach your goal in time.\\nGAME OVER!\\n\\nTry again?\"
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You have died of thirst.\\nGAME OVER!\\n\\nTry again?\"
 				blurb_button.call = \"reset\"
 				blurb_button.target = self
 			elif water_due == 600:
-				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You reached every goal!\\nVICTORY!\\nYou delivered \" + str(plants_delivered) + \" plants.\\nYou ended the game with <color_388BFF><icon_rain>\" + str($\"Garden\".water + $\"Garden\".queued_water + $\"Garden\".round_water) + \"<end>.\\n\\nPlay again?\"
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You are no longer thirsty!\\nVICTORY!\\nYou delivered \" + str(plants_delivered) + \" plants.\\nYou ended the game with <color_388BFF><icon_rain>\" + str($\"Garden\".water + $\"Garden\".queued_water + $\"Garden\".round_water) + \"<end>.\\n\\nPlay again?\"
 				blurb_button.call = \"reset\"
 				blurb_button.target = self
 			elif $\"Garden\".round_water > 0:
-				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You delivered \" + get_produced_plants() + \" to us, which helped feed our friends and families. We are sending you <color_388BFF><icon_rain>\" + str($\"Garden\".round_water) + \"<end> to help others in need.\\nKeep it up!\"
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You delivered \" + get_produced_plants() + \" to us. We are sending you <color_388BFF><icon_rain>\" + str($\"Garden\".round_water) + \"<end> to help with the whole curse thing.\\nKeep it up!\"
 			else:
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You didn\\'t deliver any plants to us this time...\"
 			$\"Garden\".queued_water += $\"Garden\".round_water
@@ -304,9 +306,9 @@ func _process(delta):
 					6:
 						new_water_due = 600
 				if new_water_due == 600:
-					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour FINAL goal is <icon_rain><color_388BFF>\" + str(new_water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
+					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYou need to have <icon_rain><color_388BFF>\" + str(new_water_due) + \"<end> by the next plant delivery to quench your thirst. <color_E14A68>This will finally lift your curse<end>!\"
 				else:
-					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour new goal is <icon_rain><color_388BFF>\" + str(new_water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
+					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYou need to have <icon_rain><color_388BFF>\" + str(new_water_due) + \"<end> by the next plant delivery to quench your thirst.\"
 			water_due_time = 12
 			plant_deliveries += 1
 		elif time_until_seeds <= 0 and seed_being_added == \"\" and not $\"Cards\".visible and not $\"Blurb Sprite\".visible:
