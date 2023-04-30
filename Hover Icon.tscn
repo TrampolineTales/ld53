@@ -37,7 +37,6 @@ var water_needed
 var every
 var sells_for
 var growth_turns
-var decay_turns
 
 func _free_if_orphaned():
 	if not is_inside_tree():
@@ -50,7 +49,7 @@ func _input(event):
 			$\"/root/Main\".time_until_seeds = 3
 			$\"/root/Main/Info2\".raw_string = \"Seed delivery in <icon_time><color_FF0037>\" + str($\"/root/Main\".time_until_seeds) + \"<end>\"
 			type = $\"/root/Main\".seed_being_added
-			$\"/root/Main/Dragged Seed\".raw_string = \"\"
+			$\"/root/Main/Dragged Seed\".visible = false
 			$\"Rectangle\".visible = false
 			sprite.set_type(\"planted\")
 			change_type(type)
@@ -72,13 +71,11 @@ func change_type(t):
 		every = 0
 		sells_for = 0
 		growth_turns = 0
-		decay_turns = 0
 	else:
 		water_needed = $\"/root/Main\".tile_database[t].water_needed
 		every = $\"/root/Main\".tile_database[t].every
 		sells_for = $\"/root/Main\".tile_database[t].sells_for
 		growth_turns = $\"/root/Main\".tile_database[t].growth_turns
-		decay_turns = $\"/root/Main\".tile_database[t].decay_turns
 
 func _init():
 	if not Utils.is_connected(\"freeing_orphans\", self, \"_free_if_orphaned\"):
@@ -108,15 +105,15 @@ func _ready():
 func update():
 	if visible and active:
 		if is_inside_tree():
-			if active and hovering and (not OS.is_window_focused() or $\"/root/Main\".mouse_position.x < rect_global_position.x or $\"/root/Main\".mouse_position.x > rect_global_position.x + rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < rect_global_position.y or $\"/root/Main\".mouse_position.y > rect_global_position.y + rect_size.y * rect_scale.y):
+			if active and hovering and ($\"/root/Main\".mouse_position.x < rect_global_position.x or $\"/root/Main\".mouse_position.x > rect_global_position.x + rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < rect_global_position.y or $\"/root/Main\".mouse_position.y > rect_global_position.y + rect_size.y * rect_scale.y):
 				unhover()
 				hovering = false
-			elif active and not hovering and OS.is_window_focused() and not ($\"/root/Main\".mouse_position.x < rect_global_position.x or $\"/root/Main\".mouse_position.x > rect_global_position.x + rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < rect_global_position.y or $\"/root/Main\".mouse_position.y > rect_global_position.y + rect_size.y * rect_scale.y):
+			elif active and not hovering and not ($\"/root/Main\".mouse_position.x < rect_global_position.x or $\"/root/Main\".mouse_position.x > rect_global_position.x + rect_size.x * rect_scale.x or $\"/root/Main\".mouse_position.y < rect_global_position.y or $\"/root/Main\".mouse_position.y > rect_global_position.y + rect_size.y * rect_scale.y):
 				hover()
 
 func hover():
 	if active and visible:
-		if $\"/root/Main/Cards\".visible and get_parent().get_path() == \"/root/Main/Garden\":
+		if ($\"/root/Main/Cards\".visible and get_parent().get_path() == \"/root/Main/Garden\") or $\"/root/Main/Blurb Sprite\".visible or (not $\"/root/Main/Cards\".visible and str(get_path()).find(\"/root/Main/Cards\") != -1):
 			return
 		if card != null and str(card.get_path()).find(\"Card\") != -1 and card.active and not (((rect_global_position.y + rect_size.y >= card.get_parent().rect_global_position.y + card.get_parent().rect_size.y) or (rect_global_position.y <= card.get_parent().rect_global_position.y))):
 			card.hover()
@@ -130,7 +127,7 @@ func hover():
 			if not database.has(type):
 				return
 			tooltip.get_child(0).data = database[type]
-			tooltip.source = self
+			tooltip.source = get_parent().get_parent().get_parent()
 			tooltip.origin = self
 			tooltips.add_child(tooltip)
 
@@ -139,14 +136,6 @@ func unhover():
 	for t in tooltips.get_children():
 		if t.locked_pos == null and (t.source != card or t.origin == self):
 			t.queue_free()
-
-func toggle_disabled():
-	for i in $\"/root/Main/Items\".items:
-		if i.type == type:
-			i.toggle_disabled()
-			break
-	for z in $\"/root/Main/Tooltips\".get_children():
-		z.queue_free()
 
 func add_empty():
 	var z = load(\"res://Slot Icon.tscn\").instance()
@@ -174,7 +163,7 @@ func can_add_tooltip():
 		return false
 
 func update_hitbox():
-	if type == \"time\":
+	if type == \"time\" or type == \"rain\" or type == \"seed\":
 		set_process_input(false)
 		active = false
 	elif type != \"coin\":
@@ -206,7 +195,7 @@ func check_effects():
 		if every == 0 or int(growth) % int(every) == 0:
 			var water_mod = 0
 			for i in get_adjacent_icons():
-				if i.type == \"sprinkler\":
+				if i.type == \"sprinkler\" or i.type == \"pitcher\":
 					water_mod -= 1
 				elif i.type == \"mega_sprinkler\":
 					water_mod -= 3
@@ -216,9 +205,26 @@ func check_effects():
 			$\"/root/Main/Garden\".queued_water -= water_taken
 			if water_taken != 0:
 				$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>\" + str(-water_taken) + \"<end>\"
+		if type == \"sunflower\":
+			var no_sunflower = true
+			for i in get_adjacent_icons():
+				if i.type == \"sunflower\":
+					no_sunflower = false
+					break
+			if no_sunflower:
+				growth -= 1
 		if type != \"dirt\" and growth >= growth_turns:
 			sprite.set_type(type)
 			match type:
+				\"crabgrass\":
+					if grid_position.x > 0:
+						if $\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].type == \"dirt\":
+							$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].sprite.set_type(\"crabgrass\")
+							$\"/root/Main/Garden\".grid[grid_position.x - 1][grid_position.y].change_type(\"crabgrass\")
+					if grid_position.x < $\"/root/Main/Garden\".grid_size.x - 1:
+						if $\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].type == \"dirt\":
+							$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].sprite.set_type(\"crabgrass\")
+							$\"/root/Main/Garden\".grid[grid_position.x + 1][grid_position.y].change_type(\"crabgrass\")
 				\"clover\":
 					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"uncommon\"] *= 1.1
 					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"rare\"] *= 1.1
@@ -235,8 +241,8 @@ func check_effects():
 								i.change_type(\"mint\")
 								break
 				\"water_lily\":
-					$\"/root/Main/Garden\".queued_water += 3
-					$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>+3<end>\"
+					$\"/root/Main/Garden\".queued_water += 2
+					$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<color_388BFF><icon_rain>+2<end>\"
 				\"herbivorous\":
 					if int(growth - growth_turns) % 3 == 0 and growth > growth_turns:
 						var destroyed_something = false

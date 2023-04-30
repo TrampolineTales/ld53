@@ -5,9 +5,8 @@
     "rarity": "common",
     "growth_turns": 10,
     "water_needed": 2,
-    "decay_turns": 0,
     "every": 5,
-    "sells_for": 15
+    "sells_for": 20
   },
   "clover": {
     "name": "Clover",
@@ -15,9 +14,17 @@
     "rarity": "common",
     "growth_turns": 6,
     "water_needed": 2,
-    "decay_turns": 10,
     "every": 3,
-    "sells_for": 9
+    "sells_for": 15
+  },
+  "crabgrass": {
+    "name": "Crabgrass",
+    "text": "Adds <icon_crabgrass> to the left and right of it.",
+    "rarity": "rare",
+    "growth_turns": 2,
+    "water_needed": 1,
+    "every": 1,
+    "sells_for": 10
   },
   "ghost_fern": {
     "name": "Ghost Fern",
@@ -25,7 +32,6 @@
     "rarity": "common",
     "growth_turns": 10,
     "water_needed": 1,
-    "decay_turns": 0,
     "every": 1,
     "sells_for": 25
   },
@@ -35,9 +41,8 @@
     "rarity": "rare",
     "growth_turns": 0,
     "water_needed": 0,
-    "decay_turns": 0,
     "every": 0,
-    "sells_for": 66
+    "sells_for": 50
   },
   "mega_sprinkler": {
     "name": "Mega Sprinkler",
@@ -45,7 +50,6 @@
     "rarity": "very_rare",
     "growth_turns": 0,
     "water_needed": 0,
-    "decay_turns": 0,
     "every": 0,
     "sells_for": 0
   },
@@ -55,9 +59,26 @@
     "rarity": "very_rare",
     "growth_turns": 0,
     "water_needed": 0,
-    "decay_turns": 3,
     "every": 0,
-    "sells_for": 3
+    "sells_for": 2
+  },
+  "pitcher": {
+    "name": "Pitcher",
+    "text": "Adjacent plants get <icon_rain><color_388BFF>1<end>/<icon_time><color_FF0037>1<end>.",
+    "rarity": "uncommon",
+    "growth_turns": 3,
+    "water_needed": 1,
+    "every": 1,
+    "sells_for": 10
+  },
+  "pumpkin": {
+    "name": "Pumpkin",
+    "text": "",
+    "rarity": "uncommon",
+    "growth_turns": 6,
+    "water_needed": 1,
+    "every": 2,
+    "sells_for": 30
   },
   "sprinkler": {
     "name": "Sprinkler",
@@ -65,17 +86,15 @@
     "rarity": "rare",
     "growth_turns": 0,
     "water_needed": 0,
-    "decay_turns": 0,
     "every": 0,
     "sells_for": 0
   },
   "squash": {
     "name": "Squash",
     "text": "Must be planted on another plant.",
-    "rarity": "common",
+    "rarity": "uncommon",
     "growth_turns": 4,
     "water_needed": 1,
-    "decay_turns": 0,
     "every": 1,
     "sells_for": 30
   },
@@ -85,9 +104,17 @@
     "rarity": "rare",
     "growth_turns": 12,
     "water_needed": 2,
-    "decay_turns": 0,
     "every": 1,
     "sells_for": 60
+  },
+  "sunflower": {
+    "name": "Sunflower",
+    "text": "Will not grow unless adjacent to another <icon_sunflower>.",
+    "rarity": "common",
+    "growth_turns": 3,
+    "water_needed": 1,
+    "every": 2,
+    "sells_for": 30
   },
   "twolip": {
     "name": "Twolip",
@@ -95,17 +122,15 @@
     "rarity": "rare",
     "growth_turns": 4,
     "water_needed": 1,
-    "decay_turns": 8,
     "every": 1,
     "sells_for": 4
   },
   "water_lily": {
     "name": "Water Lily",
-    "text": "Gives <icon_rain><color_388BFF>3<end>/<icon_time><color_FF0037>1<end>.",
+    "text": "Gives <icon_rain><color_388BFF>2<end>/<icon_time><color_FF0037>1<end>.",
     "rarity": "uncommon",
     "growth_turns": 2,
     "water_needed": 0,
-    "decay_turns": 5,
     "every": 0,
     "sells_for": 0
   },
@@ -115,7 +140,6 @@
     "rarity": "very_rare",
     "growth_turns": 7,
     "water_needed": 1,
-    "decay_turns": 0,
     "every": 1,
     "sells_for": 77
   }

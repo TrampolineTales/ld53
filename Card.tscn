@@ -227,7 +227,7 @@ func set_card_size():
 			\"very_rare\":
 				rarity.raw_string = \"<color_4A1369>Very Rare<end>\"
 		
-		harvest.raw_string = \"Gives <icon_rain><color_388BFF>\" + str(data.sells_for) + \"<end>/harvest\"
+		harvest.raw_string = \"Gives <icon_rain><color_388BFF>\" + str(data.sells_for) + \"<end>/delivery\"
 		harvest.size_update = true
 		harvest.force_update = true
 		harvest.update()
@@ -352,8 +352,6 @@ func set_card_size():
 	else:
 		if data.text != \"\":
 			description.raw_string = \"Fully grown after <icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>.\\n\" + data.text
-#			if data.decay_turns != 0:
-#				description.raw_string += \"\\nTakes an extra <icon_time><color_FF0037>\" + str(data.decay_turns) + \"<end> to harvest.\"
 		elif data.growth_turns > 0:
 			description.raw_string = \"Fully grown after <icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>.\"
 		description.change_font_size(font_size_value, true)

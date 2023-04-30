@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Outline Label.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Garden.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Card.tscn" type="PackedScene" id=3]
+[ext_resource path="res://icons/seed.png" type="Texture" id=4]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends Node2D
@@ -21,8 +22,11 @@ var water_due = 0
 var water_due_time = 12
 var pass_time_button
 var blurb_button
+var tut_button_left
+var tut_button_right
 var plant_deliveries = 0
 var plants_delivered = 0
+var tut_page = 1
 
 func _ready():
 	var tile_file = File.new()
@@ -34,10 +38,28 @@ func _ready():
 	blurb_button = preload(\"res://TT Button.tscn\").instance()
 	blurb_button.color = Color(\"#BF3C59\")
 	blurb_button.button_text = \"<icon_confirm>\"
-	blurb_button.rect_position = Vector2(448, 454)
+	blurb_button.rect_position = Vector2(448, 342)
 	blurb_button.call = \"close_blurb\"
 	blurb_button.target = self
 	$\"Blurb Sprite\".add_child(blurb_button)
+	
+	tut_button_left = preload(\"res://TT Button.tscn\").instance()
+	tut_button_left.color = Color(\"#BF3C59\")
+	tut_button_left.button_text = \"<icon_left>\"
+	tut_button_left.rect_position = Vector2(416, 342)
+	tut_button_left.call = \"tutorial_backward\"
+	tut_button_left.target = self
+	$\"Blurb Sprite\".add_child(tut_button_left)
+	
+	tut_button_right = preload(\"res://TT Button.tscn\").instance()
+	tut_button_right.color = Color(\"#BF3C59\")
+	tut_button_right.button_text = \"<icon_right>\"
+	tut_button_right.rect_position = Vector2(480, 342)
+	tut_button_right.call = \"tutorial_forward\"
+	tut_button_right.target = self
+	$\"Blurb Sprite\".add_child(tut_button_right)
+	
+	blurb_button.visible = false
 	
 	for a in tile_db.result:
 		var t = a
@@ -60,14 +82,80 @@ func _ready():
 	pass_time_button.call = \"pass_time\"
 	pass_time_button.target = self
 	add_child(pass_time_button)
+	
+	$\"Info3\".raw_string = \"Something Something Game Title\"
+	$\"Info2\".raw_string = \"A game by TrampolineTales\"
+	
+#	draw_tutorial()
 
 func reset():
 	get_tree().reload_current_scene()
 
 func close_blurb():
+	tut_button_left.visible = false
+	tut_button_right.visible = false
+	blurb_button.visible = true
 	$\"Blurb Sprite\".visible = false
 	$\"Garden\".queued_water += $\"Garden\".round_water
 	$\"Garden\".round_water = 0
+	$\"Info\".visible = true
+	tut_page = 10
+
+func draw_tutorial():
+	$\"Blurb Sprite\".visible = true
+	if tut_page > 1:
+		$\"Blurb Sprite/Image\".texture = load(\"res://icons/tut_\" + str(tut_page - 1) + \".png\")
+	else:
+		$\"Blurb Sprite/Image\".texture = preload(\"res://icons/planted.png\")
+	$\"Blurb Sprite/Blurb/Text\".custom_max_width = $\"Blurb Sprite/Blurb\".rect_size.x - 340
+	$\"Blurb Sprite/Blurb/Text\".raw_string = \"Tutorial (\" + str(tut_page) + \"/9)\\n\"
+	match tut_page:
+		1:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Welcome to GAME NAME! something here's the goal.\"
+		2:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Every plant has different characteristics.\"
+		3:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"How rare the plant is.\"
+		4:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"How much <icon_rain> the plant takes.\"
+		5:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"And how frequently it takes <icon_rain>.\"
+		6:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"How much <icon_rain> you get back when the plant is delivered.\"
+		7:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"How long it takes the plant to be deliverable.\"
+		8:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"And any effects the plant has while in a deliverable state.\"
+		9:
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Press the <icon_time><color_FF0037>1<end> button (in the bottom-right) to pass time.\\nNow go deliver some plants!\"
+	if tut_page == 9:
+		tut_button_right.button_text = \"<icon_confirm>\"
+		tut_button_right.text_node.raw_string = \"<icon_confirm>\"
+		tut_button_right.saved_raw_string = \"<icon_confirm>\"
+		tut_button_right.text_node.force_update = true
+		tut_button_right.text_node.update()
+		tut_button_right.correct_size()
+		tut_button_right.call = \"close_blurb\"
+	else:
+		tut_button_right.button_text = \"<icon_right>\"
+		tut_button_right.text_node.raw_string = \"<icon_right>\"
+		tut_button_right.saved_raw_string = \"<icon_right>\"
+		tut_button_right.text_node.force_update = true
+		tut_button_right.text_node.update()
+		tut_button_right.correct_size()
+		tut_button_right.call = \"tutorial_forward\"
+	if tut_page == 1:
+		tut_button_left.visible = false
+
+func tutorial_backward():
+	if tut_page > 1:
+		tut_page -= 1
+		draw_tutorial()
+
+func tutorial_forward():
+	if tut_page < 9:
+		tut_page += 1
+		draw_tutorial()
 
 func get_produced_plants():
 	var string = \"\"
@@ -104,6 +192,8 @@ func pass_time():
 			if $\"Garden\".timers[x][y].get_child(0).raw_string.find(\"<icon_rain>\") != -1:
 				$\"Garden\".timers[x][y].get_child(0).raw_string = \"\"
 			$\"Garden\".grid[x][y].check_effects()
+			for i in $\"Garden\".timers[x][y].get_child(0).texts[8].icons:
+				i.update_hitbox()
 
 func add_seed(type):
 	if type == \"squash\":
@@ -142,6 +232,9 @@ func _process(delta):
 			$\"Info\".raw_string = \"<icon_rain><color_388BFF>\" + str($\"Garden\".water) + \"/\" + str(water_due) + \"<end>\"
 		else:
 			$\"Info\".raw_string = \"<icon_rain><color_388BFF>\" + str($\"Garden\".water) + \"<end>\"
+		if tut_page >= 10:
+			$\"Info3\".raw_string = \"Need to deliver plants in <icon_time><color_FF0037>\" + str(water_due_time) + \"<end>\"
+			$\"Info2\".raw_string = \"Seed delivery in <icon_time><color_FF0037>\" + str(time_until_seeds) + \"<end>\"
 		if water_due_time <= 0 and not $\"Blurb Sprite\".visible:
 			for x in $\"Garden\".grid_size.x:
 				for y in $\"Garden\".grid_size.y:
@@ -168,6 +261,8 @@ func _process(delta):
 							$\"Garden\".grid[x][y].sprite.set_type(\"dirt\")
 							$\"Garden\".grid[x][y].change_type(\"dirt\")
 			$\"Blurb Sprite\".visible = true
+			if tut_page >= 9:
+				$\"Blurb Sprite/Blurb/Text\".custom_max_width = null
 			if $\"Garden\".water + $\"Garden\".queued_water + $\"Garden\".round_water < water_due:
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You did not reach your goal in time.\\nGAME OVER!\\n\\nTry again?\"
 				blurb_button.call = \"reset\"
@@ -181,6 +276,8 @@ func _process(delta):
 			else:
 				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You didn\\'t deliver any plants to us this time...\"
 			water_due += 50
+			if water_due == 300 or water_due == 450:
+				water_due += 50
 			if blurb_button.call != \"reset\":
 				if water_due == 500:
 					$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour FINAL goal is <icon_rain><color_388BFF>\" + str(water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in the game ending.\"
@@ -221,12 +318,9 @@ func _process(delta):
 					card.set_card_size()
 					card_pool[rarity].erase(rand_symbol)
 			$\"Cards\".visible = true
-		$\"Info3\".raw_string = \"Need to deliver plants in <icon_time><color_FF0037>\" + str(water_due_time) + \"<end>\"
-		$\"Info2\".raw_string = \"Seed delivery in <icon_time><color_FF0037>\" + str(time_until_seeds) + \"<end>\"
 		if seed_being_added != \"\":
-			$\"Dragged Seed\".raw_string = \"<icon_seed>\"
-			$\"Dragged Seed\".rect_position = Vector2(mouse_position.x - 24, mouse_position.y - 24)
-			$\"Dragged Seed\".icon_z_index = 10
+			$\"Dragged Seed\".visible = true
+			$\"Dragged Seed\".position = Vector2(mouse_position.x - 12, mouse_position.y - 12)
 		for node in get_tree().get_nodes_in_group(\"Anim Update\"):
 			node.call(\"update\")
 		$\"Info2\".rect_position.x = 512 - ($\"Info2\".get_font(\"font\").get_string_size($\"Info2\".text).x - $\"Info2\".get_font(\"font\").extra_spacing_space) * 2 * $\"Info2\".current_scale
@@ -382,6 +476,7 @@ margin_left = 688.0
 margin_right = 688.0
 
 [node name="Info" parent="." instance=ExtResource( 1 )]
+visible = false
 margin_top = 526.0
 margin_bottom = 536.0
 
@@ -395,7 +490,7 @@ margin_bottom = 24.0
 
 [node name="Blurb Sprite" type="Node2D" parent="."]
 visible = false
-position = Vector2( 32, 32 )
+position = Vector2( 32, 80 )
 z_index = 10
 __meta__ = {
 "_edit_lock_": true
@@ -403,7 +498,7 @@ __meta__ = {
 
 [node name="Blurb" type="ColorRect" parent="Blurb Sprite"]
 margin_right = 960.0
-margin_bottom = 512.0
+margin_bottom = 400.0
 color = Color( 0, 0, 0, 0.72549 )
 __meta__ = {
 "_edit_lock_": true
@@ -415,11 +510,23 @@ margin_top = 8.0
 margin_right = 8.0
 margin_bottom = 0.0
 
+[node name="Image" type="Sprite" parent="Blurb Sprite"]
+position = Vector2( 792, 200 )
+__meta__ = {
+"_edit_lock_": true
+}
+
 [node name="Tooltips" type="Node2D" parent="."]
 z_index = 4
 __meta__ = {
 "_edit_lock_": true
 }
 
-[node name="Dragged Seed" parent="." instance=ExtResource( 1 )]
-margin_bottom = 10.0
+[node name="Dragged Seed" type="Sprite" parent="."]
+visible = false
+scale = Vector2( 3, 3 )
+z_index = 10
+texture = ExtResource( 4 )
+__meta__ = {
+"_edit_lock_": true
+}

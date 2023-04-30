@@ -1138,6 +1138,7 @@ func update():
 			texts[8].text = raw_string
 			texts[8].raw_string = raw_string
 			texts[8].icon_z_index = icon_z_index
+			texts[8].custom_max_width = custom_max_width
 			texts[8].check_locale()
 			texts[8].rect_size = rect_size
 			texts[8].e_spaced = false

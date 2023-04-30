@@ -271,7 +271,7 @@ func unhover():
 		hovering = false
 
 func press():
-	if can_be_pressed() and ((was_down_while_active and options.input_type == 1) or options.input_type == 0) and not $\"/root/Main/Cards\".visible and $\"/root/Main\".seed_being_added == \"\":
+	if can_be_pressed() and ((was_down_while_active and options.input_type == 1) or options.input_type == 0) and not $\"/root/Main/Cards\".visible and $\"/root/Main\".seed_being_added == \"\" and (not $\"/root/Main/Blurb Sprite\".visible or get_parent().get_path() == \"/root/Main/Blurb Sprite\"):
 		if delayed:
 			delayed = false
 			background.color = hover_color
@@ -333,6 +333,8 @@ func unpress():
 		if (options.input_type == 0 or not toggle):
 			visual_reset()
 		hovering = false
+		if get_path() == $\"/root/Main\".tut_button_right.get_path():
+			$\"/root/Main\".tut_button_left.visible = true
 		if options.input_type == 1:
 			held = false
 			if texture == null:

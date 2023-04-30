@@ -287,7 +287,7 @@ func set_card_size():
 			\"very_rare\":
 				rarity.raw_string = \"<color_4A1369>Very Rare<end>\"
 
-		harvest.raw_string = \"Gives <icon_rain><color_388BFF>\" + str(data.sells_for) + \"<end>/harvest\"
+		harvest.raw_string = \"Gives <icon_rain><color_388BFF>\" + str(data.sells_for) + \"<end>/delivery\"
 		harvest.size_update = true
 		harvest.force_update = true
 		harvest.update()

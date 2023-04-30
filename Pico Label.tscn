@@ -387,7 +387,7 @@ func check_locale():
 			if icon_scale_override != 0:
 				if $\"/root/Main\".tile_database.has(icons[icon_num].type):
 					icon_scale = 1
-					item_icon_offset = Vector2(-4, -4)
+					item_icon_offset = Vector2(-6, -6)
 				else:
 					icon_scale = icon_scale_override
 				i_offset.x += item_icon_offset.x
