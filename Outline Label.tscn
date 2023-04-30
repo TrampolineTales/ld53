@@ -918,7 +918,10 @@ func set_icon_size():
 				else:
 					change_icon_size_override(1, Vector2(-3 + custom_icon_offset.x, -2 + custom_icon_offset.y))
 			1:
-				change_icon_size_override(2, Vector2(-8 + custom_icon_offset.x, -5 + custom_icon_offset.y))
+				if str(get_parent().get_parent().get_path()) == \"/root/Main/Garden\":
+					change_icon_size_override(2, Vector2(-2 + custom_icon_offset.x, -4 + custom_icon_offset.y))
+				else:
+					change_icon_size_override(2, Vector2(-8 + custom_icon_offset.x, -5 + custom_icon_offset.y))
 			2:
 				if get_parent() is TextureButton:
 					if raw_string == tr(\"removal_pay\"):

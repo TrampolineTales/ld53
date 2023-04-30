@@ -30,6 +30,13 @@ var cant_go_dirs = []
 var selector_alignment = \"dont\"
 
 var growth = 0
+var grid_position = Vector2(0, 0)
+
+var water_needed
+var every
+var sells_for
+var growth_turns
+var decay_turns
 
 func _free_if_orphaned():
 	if not is_inside_tree():
@@ -37,13 +44,40 @@ func _free_if_orphaned():
 
 func _input(event):
 	if get_parent().get_path() == \"/root/Main/Garden\" and get_parent().visible and hovering and event is InputEventMouseButton and ((event.is_pressed() and $\"/root/Main/Options Sprite/Options\".input_type == 1) or ($\"/root/Main/Options Sprite/Options\".input_type == 0 and (event.is_pressed()))) and event.button_index == BUTTON_LEFT and not event.is_echo():
-		type = $\"/root/Main\".seed_being_added
-		sprite.set_type(\"planted\")
-		growth = 0
-		$\"/root/Main\".seed_being_added = \"\"
-		$\"/root/Main\".time_until_seeds = 3
-		$\"/root/Main/Dragged Seed\".raw_string = \"\"
-		$\"Rectangle\".visible = false
+		if (type == \"dirt\" and $\"/root/Main\".seed_being_added != \"\" and $\"/root/Main\".seed_being_added != \"squash\") or (type != \"dirt\" and $\"/root/Main\".seed_being_added == \"squash\"):
+			sprite.set_type(\"planted\")
+			$\"/root/Main\".time_until_seeds = 3
+			$\"/root/Main/Info2\".raw_string = \"Seed delivery in <icon_time><color_FF0037>\" + str($\"/root/Main\".time_until_seeds) + \"<end>\"
+			type = $\"/root/Main\".seed_being_added
+			$\"/root/Main/Dragged Seed\".raw_string = \"\"
+			$\"Rectangle\".visible = false
+			sprite.set_type(\"planted\")
+			change_type(type)
+			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str(growth_turns - growth) + \"<end>\"
+			$\"/root/Main\".seed_being_added = \"\"
+		elif $\"/root/Main\".seed_being_added == \"\":
+			sprite.set_type(\"dirt\")
+			if growth >= growth_turns:
+				$\"/root/Main/Garden\".water += sells_for
+			change_type(\"dirt\")
+
+func change_type(t):
+	$\"/root/Main/Cards\".visible = false
+	$\"Dirt\".visible = true
+	growth = 0
+	type = t
+	if t == \"dirt\":
+		water_needed = 0
+		every = 0
+		sells_for = 0
+		growth_turns = 0
+		decay_turns = 0
+	else:
+		water_needed = $\"/root/Main\".tile_database[t].water_needed
+		every = $\"/root/Main\".tile_database[t].every
+		sells_for = $\"/root/Main\".tile_database[t].sells_for
+		growth_turns = $\"/root/Main\".tile_database[t].growth_turns
+		decay_turns = $\"/root/Main\".tile_database[t].decay_turns
 
 func _init():
 	if not Utils.is_connected(\"freeing_orphans\", self, \"_free_if_orphaned\"):
@@ -81,13 +115,13 @@ func update():
 
 func hover():
 	if active and visible:
+		if $\"/root/Main/Cards\".visible and get_parent().get_path() == \"/root/Main/Garden\":
+			return
 		if card != null and str(card.get_path()).find(\"Card\") != -1 and card.active and not (((rect_global_position.y + rect_size.y >= card.get_parent().rect_global_position.y + card.get_parent().rect_size.y) or (rect_global_position.y <= card.get_parent().rect_global_position.y))):
 			card.hover()
-		
-		if get_parent().get_path() == \"/root/Main/Garden\":
-			if $\"/root/Main\".seed_being_added != \"\":
-				$\"Rectangle\".visible = true
-				hovering = true
+		if ($\"/root/Main\".seed_being_added != \"\" and $\"/root/Main\".seed_being_added != \"squash\" and not $\"/root/Main/\".tile_database.has(type)) or ($\"/root/Main\".seed_being_added == \"squash\" and $\"/root/Main/\".tile_database.has(type)):
+			$\"Rectangle\".visible = true
+			hovering = true
 		elif can_add_tooltip():
 			hovering = true
 			var tooltip = load(\"res://Tooltip.tscn\").instance()
@@ -132,19 +166,82 @@ func add_empty():
 func can_add_tooltip():
 	if tooltips.get_children().size() < 10 and type != \"item_missing\" and $\"/root/Main\".tile_database.has(type):
 		for t in tooltips.get_children():
-			if (t != null and t.source == card) or card == null or card is Viewport or t.hover_timer < 80 or t.source == null or not card.tooltip_card or (((rect_global_position.y + rect_size.y >= card.get_parent().rect_global_position.y + card.get_parent().rect_size.y) or (rect_global_position.y <= card.get_parent().rect_global_position.y))):
+			if (t != null and t.source == card) or card == null or card is Viewport or t.hover_timer < 80 or t.source == null or not card.tooltip_card:
 				return false
 		return true
 	else:
 		return false
 
 func update_hitbox():
-	if type != \"coin\":
+	if type == \"time\":
+		set_process_input(false)
+		active = false
+	elif type != \"coin\":
 		rect_size = Vector2(sprite.texture.get_size().x * sprite.scale.x - 1, sprite.texture.get_size().y * sprite.scale.y - 1)
 		active = true
 	else:
 		rect_size = Vector2(0, 0)
 		selectable = false
+
+func get_adjacent_icons():
+	var arr = []
+	var checker_x
+	var checker_y
+	var x = grid_position.x
+	var y = grid_position.y
+	
+	for n in range(9):
+		checker_x = (n % 3) - 1
+		checker_y = -1 + floor(n / 3)
+		if x + checker_x >= 0 and x + checker_x < $\"/root/Main/Garden\".grid_size.x and y + checker_y >= 0 and y + checker_y < $\"/root/Main/Garden\".grid_size.y and not (checker_x == 0 and checker_y == 0):
+			arr.push_back($\"/root/Main/Garden\".grid[x + checker_x][y + checker_y])
+	
+	arr.erase(self)
+	return arr
+
+func check_effects():
+	if type != \"dirt\":
+		growth += 1
+		if every == 0 or int(growth) % int(every) == 0:
+			$\"/root/Main/Garden\".queued_water -= water_needed
+		if type != \"dirt\" and growth >= growth_turns:
+			sprite.set_type(type)
+			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"\"
+			match type:
+				\"clover\":
+					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"uncommon\"] *= 1.1
+					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"rare\"] *= 1.1
+					$\"/root/Main\".rarity_bonuses[\"seeds\"][\"very_rare\"] *= 1.1
+				\"mint\":
+					randomize()
+					if rand_range(0, 1) < 0.5:
+						randomize()
+						var arr = get_adjacent_icons()
+						arr.shuffle()
+						for i in get_adjacent_icons():
+							if i.type == \"dirt\":
+								i.sprite.set_type(\"planted\")
+								i.change_type(\"mint\")
+								break
+				\"water_lily\":
+					$\"/root/Main/Garden\".queued_water += 3
+				\"herbivorous\":
+					if int(growth - growth_turns) % 3 == 0 and growth != growth_turns:
+						var destroyed_something = false
+						randomize()
+						var arr = get_adjacent_icons()
+						arr.shuffle()
+						for i in arr:
+							if i.type != \"dirt\":
+								destroyed_something = true
+								i.sprite.set_type(\"dirt\")
+								i.change_type(\"dirt\")
+								break
+						if not destroyed_something:
+							sprite.set_type(\"dirt\")
+							change_type(\"dirt\")
+		else:
+			$\"/root/Main/Garden\".timers[grid_position.x][grid_position.y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str(growth_turns - growth) + \"<end>\"
 "
 
 [node name="Hover Icon" type="Control" groups=["Anim Update", "Selectable"]]
@@ -159,6 +256,7 @@ __meta__ = {
 }
 
 [node name="Icon" parent="." instance=ExtResource( 1 )]
+z_as_relative = true
 
 [node name="Rectangle" type="Node2D" parent="."]
 visible = false
@@ -168,9 +266,18 @@ __meta__ = {
 }
 
 [node name="ColorRect" type="ColorRect" parent="Rectangle"]
-margin_right = 32.0
-margin_bottom = 32.0
+margin_right = 36.0
+margin_bottom = 36.0
 color = Color( 0.113725, 0.521569, 0.0470588, 0.411765 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Dirt" type="ColorRect" parent="."]
+visible = false
+margin_right = 36.0
+margin_bottom = 36.0
+color = Color( 0.478431, 0.14902, 0.14902, 1 )
 __meta__ = {
 "_edit_lock_": true
 }

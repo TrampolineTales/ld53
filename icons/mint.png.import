@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/bomb.png-62ee5ac9029f2bdf70f8323d395d8503.stex"
+path="res://.import/mint.png-ec88e621ef01a50f5f47a487e33cc089.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://icons/bomb.png"
-dest_files=[ "res://.import/bomb.png-62ee5ac9029f2bdf70f8323d395d8503.stex" ]
+source_file="res://icons/mint.png"
+dest_files=[ "res://.import/mint.png-ec88e621ef01a50f5f47a487e33cc089.stex" ]
 
 [params]
 

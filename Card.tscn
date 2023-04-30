@@ -21,7 +21,7 @@ var extra_height = 0
 var cant_go_dirs = []
 var selector_alignment = \"card\"
 
-var data = {\"type\": \"seed\", \"name\": \"\", \"text\": \"\", \"rarity\": \"none\"}
+var data = {\"type\": \"seed\", \"name\": \"\", \"text\": \"\", \"rarity\": \"none\", \"sells_for\": 0, \"growth_turns\": 0}
 
 func _free_if_orphaned():
 	if not is_inside_tree():
@@ -56,17 +56,17 @@ func set_icon_size():
 	border = $\"Border\"
 	
 	icon.type = data.type
-	icon.texture = preload(\"res://icons/seed.png\")
+	icon.texture = load(\"res://icons/\" + data.type + \".png\")
 	
 	background.rect_size.x = 300 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
 	
+	icon.scale = Vector2(2, 2)
 	if int($\"/root/Main/Options Sprite/Options\".display_font) == 1:
 		icon.position = Vector2(background.rect_size.x / 2 - icon.texture.get_size().x * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 94 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - icon.texture.get_size().y * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 1) * 16)
 	elif int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
 		icon.position = Vector2(background.rect_size.x / 2 - icon.texture.get_size().x * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 100 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - icon.texture.get_size().y * 2 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 1) * 16)
 	else:
-		icon.position = Vector2(background.rect_size.x / 2 - icon.texture.get_size().x * 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 90 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - icon.texture.get_size().y * 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 1) * 8)
-	icon.scale = Vector2(8, 8)
+		icon.position = Vector2(background.rect_size.x / 2 - icon.texture.get_size().x * 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections * icon.scale.x / 8, 90 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - icon.texture.get_size().y * icon.scale.y / 8 * 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + ($\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections - 1) * 8)
 		
 	icon.position.y -= 2
 
@@ -74,6 +74,7 @@ func set_card_size():
 	var title = $\"Background/Title\"
 	var rarity = $\"Background/Rarity\"
 	var value = $\"Background/Value\"
+	var harvest = $\"Background/Harvest\"
 	var description = $\"Background/Description\"
 	var separator = $\"Separator\"
 	var font_offset
@@ -85,12 +86,14 @@ func set_card_size():
 
 	title.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
 	rarity.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+	harvest.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
 	value.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
 	description.text_mod = -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
 	separator.width = 4 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
 
 	title.dont_scale = true
 	rarity.dont_scale = true
+	harvest.dont_scale = true
 	value.dont_scale = true
 	description.dont_scale = true
 
@@ -124,13 +127,16 @@ func set_card_size():
 			rarity.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
 			rarity.change_set_size(0.75)
 			rarity.base_scale = 0.75
+			harvest.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
+			harvest.change_set_size(0.75)
+			harvest.base_scale = 0.75
 			value.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
 			value.change_set_size(0.75)
 			value.base_scale = 0.75
 			description.tooltip_desc = true
 			description.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25)
-			description.change_set_size(0.75)
-			description.base_scale = 0.75
+			description.change_set_size(0.5)
+			description.base_scale = 0.5
 			cjk_mod = 4
 		else:
 			title.scale_mod = 1 + -floor((1 - $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections) / 0.25) - 1
@@ -153,6 +159,7 @@ func set_card_size():
 			cjk_mod = 1
 		title.v_spaced = true
 		rarity.v_spaced = true
+		harvest.v_spaced = true
 		value.v_spaced = true
 		description.v_spaced = true
 	
@@ -219,7 +226,12 @@ func set_card_size():
 				rarity.raw_string = \"<color_F8F87B>Rare<end>\"
 			\"very_rare\":
 				rarity.raw_string = \"<color_4A1369>Very Rare<end>\"
-				
+		
+		harvest.raw_string = \"Gives <icon_rain><color_388BFF>\" + str(data.sells_for) + \"<end>/harvest\"
+		harvest.size_update = true
+		harvest.force_update = true
+		harvest.update()
+		
 		if data.type == \"hover_coin\":
 			rarity.raw_string = \"<color_797979>\"+ tr(\"common\") + \"<end>\"
 		rarity.change_font_size(font_size_value, true)
@@ -232,10 +244,10 @@ func set_card_size():
 				rarity.rect_position = Vector2(background.rect_size.x / 2 - (rarity.get_child(0).get_font(\"font\").get_string_size(rarity.get_child(0).text).x - 24) * cjk_mod / 2 * rarity.current_scale, title.rect_position.y + font_offset + 112 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + (font_offset + 8) * title.get_child(0).text.count(\"\\\\n\"))
 			else:
 				rarity.rect_position = Vector2(background.rect_size.x / 2 - (rarity.get_font(\"font\").get_string_size(rarity.text).x - rarity.get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * rarity.current_scale, title.rect_position.y + font_offset + 100 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + (font_offset + 8) * title.text.count(\"\\\\n\"))
+				harvest.rect_position = Vector2(background.rect_size.x / 2 - (harvest.get_font(\"font\").get_string_size(harvest.text).x - harvest.get_font(\"font\").extra_spacing_space) * cjk_mod / 2 * harvest.current_scale, title.rect_position.y + font_offset + 168 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections + (font_offset + 8) * title.text.count(\"\\\\n\"))
 		
-		if data.has(\"growth_turns\"):
-			value.raw_string = \"Needs <icon_rain><color_388BFF>\" + str(data.water_needed) + \"<end>/<icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>\"
-			value.values = [data.growth_turns]
+		if data.has(\"water_needed\"):
+			value.raw_string = \"Needs <icon_rain><color_388BFF>\" + str(data.water_needed) + \"<end>/<icon_time><color_FF0037>\" + str(data.every) + \"<end>\"
 			
 			value.force_update = true
 			value.update()
@@ -256,7 +268,7 @@ func set_card_size():
 				elif int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
 					description.rect_position.y = value.rect_position.y + font_offset * 1.5 + 6 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
 				else:
-					description.rect_position.y = value.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
+					description.rect_position.y = harvest.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
 			else:
 				value.rect_position.y = title.rect_position.y + font_offset + 8 + (font_offset + 8) * title.text.count(\"\\\\n\")
 				if cjk:
@@ -278,7 +290,12 @@ func set_card_size():
 				description.rect_position.y = title.rect_position.y + font_offset * 2 - 32 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
 			else:
 				description.rect_position.y = title.rect_position.y + font_offset * 2 - 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
-		description.raw_string = data.text
+		if data.type == \"squash\":
+			description.raw_string = data.text
+		elif data.text != \"\":
+			description.raw_string = \"<color_FF0037>After <icon_time>\" + str(data.growth_turns) + \"<end>:\\n\" + data.text
+		elif data.growth_turns > 0:
+			description.raw_string = \"Fully grown after <icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>.\"
 		if int($\"/root/Main/Options Sprite/Options\".display_font) == 2:
 			description.rect_position.x = 16 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections
 		else:
@@ -304,7 +321,7 @@ func set_card_size():
 			elif int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
 				background.rect_size.y = value.rect_position.y + (value.get_child(0).get_font(\"font\").get_height() * value.current_scale) * (value.get_child(0).text.count(\"\\\\n\") + 1.25)
 			else:
-				background.rect_size.y = value.rect_position.y + ((value.get_font(\"font\").get_height() * value.current_scale * 4.0) + value.current_scale * 4.0 * (3 + 1.0 / 9.0)) * value.get_line_count()
+				background.rect_size.y = harvest.rect_position.y + ((harvest.get_font(\"font\").get_height() * harvest.current_scale * 4.0) + harvest.current_scale * 4.0 * (3 + 1.0 / 9.0)) * harvest.get_line_count()
 		if cjk:
 			if description.raw_string != \"\":
 				background.rect_size.y = description.rect_position.y + ((description.get_font(\"font\").get_height() * description.current_scale) * description.get_child(0).get_line_count() + 8)
@@ -316,7 +333,7 @@ func set_card_size():
 			if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
 				background.rect_size.y = description.rect_position.y + ((description.get_child(0).get_font(\"font\").get_height() * description.current_scale)) * (description.get_child(0).text.count(\"\\\\n\") + 1.25)
 			else:
-				background.rect_size.y = description.rect_position.y + ((description.get_font(\"font\").get_height() * description.current_scale * 4.0) + description.current_scale * 4.0 * (3 + 1.0 / 9.0)) * description.get_line_count()
+				background.rect_size.y = 4 + description.rect_position.y + ((description.get_font(\"font\").get_height() * description.current_scale * 4.0) + description.current_scale * 4.0 * (3 + 1.0 / 9.0)) * description.get_line_count()
 		if data.type == \"missing\" or data.type == \"item_missing\":
 			if cjk:
 				background.rect_size.y += value.rect_position.y + (value.get_font(\"font\").get_height() * value.current_scale) * value.get_child(0).get_line_count() + 8
@@ -335,7 +352,14 @@ func set_card_size():
 			border.rect_position = Vector2(background.rect_position.x - 4, background.rect_position.y - 4)
 			border.rect_size = Vector2(background.rect_size.x + 8, background.rect_size.y + 8)
 	else:
-		description.raw_string = data.text
+		if data.type == \"squash\":
+			description.raw_string = data.text
+		elif data.text != \"\":
+			description.raw_string = \"<color_FF0037>After <icon_time>\" + str(data.growth_turns) + \"<end>:\\n\" + data.text
+#			if data.decay_turns != 0:
+#				description.raw_string += \"\\nTakes an extra <icon_time><color_FF0037>\" + str(data.decay_turns) + \"<end> to harvest.\"
+		elif data.growth_turns > 0:
+			description.raw_string = \"Fully grown after <icon_time><color_FF0037>\" + str(data.growth_turns) + \"<end>.\"
 		description.change_font_size(font_size_value, true)
 		description.rect_position = Vector2(8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections, 8 * $\"/root/Main/Options Sprite/Options\".ui_scaling.symbol_item_selections)
 		if int($\"/root/Main/Options Sprite/Options\".display_font) > 0:
@@ -420,9 +444,10 @@ __meta__ = {
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_bottom = 10.0
-align = 1
 
 [node name="Rarity" parent="Background" instance=ExtResource( 1 )]
+
+[node name="Harvest" parent="Background" instance=ExtResource( 1 )]
 
 [node name="Value" parent="Background" instance=ExtResource( 1 )]
 margin_bottom = 7.0

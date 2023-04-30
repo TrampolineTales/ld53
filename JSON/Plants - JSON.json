@@ -1,37 +1,122 @@
 {
-  "bomb": {
-    "name": "Bomb Plant",
-    "text": "Destroys adjacent plants when fully grown.",
-    "rarity": "common",
-    "growth_turns": "",
-    "water_needed": ""
-  },
   "cactus": {
     "name": "Cactus",
     "text": "",
     "rarity": "common",
-    "growth_turns": "",
-    "water_needed": ""
+    "growth_turns": 10,
+    "water_needed": 2,
+    "decay_turns": 0,
+    "every": 5,
+    "sells_for": 10
+  },
+  "clover": {
+    "name": "Clover",
+    "text": "You are <color_E14A68>1.1x<end> more likely to find <color_38769A>Uncommon<end>, <color_F8F87B>Rare<end>, and <color_4A1369>Very Rare<end> seeds.",
+    "rarity": "common",
+    "growth_turns": 5,
+    "water_needed": 2,
+    "decay_turns": 10,
+    "every": 3,
+    "sells_for": 7
+  },
+  "ghost_fern": {
+    "name": "Ghost Fern",
+    "text": "Has a <color_E14A68>50%<end> chance of adding a <icon_ghost_fern> seed when harvested.",
+    "rarity": "common",
+    "growth_turns": 10,
+    "water_needed": 1,
+    "decay_turns": 0,
+    "every": 1,
+    "sells_for": 25
   },
   "herbivorous": {
     "name": "Herbivorous",
-    "text": "Needs seeds instead of water.",
+    "text": "Needs <icon_seed><color_57821D>1<end>/<icon_time><color_FF0037>2<end>.",
+    "rarity": "uncommon",
+    "growth_turns": 6,
+    "water_needed": 0,
+    "decay_turns": 0,
+    "every": 0,
+    "sells_for": 25
+  },
+  "mega_sprinkler": {
+    "name": "Mega Sprinkler",
+    "text": "Adjacent plants get <icon_rain><color_388BFF>3<end>/<icon_time><color_FF0037>1<end>.",
+    "rarity": "very_rare",
+    "growth_turns": 0,
+    "water_needed": 0,
+    "decay_turns": 0,
+    "every": 0,
+    "sells_for": 0
+  },
+  "mint": {
+    "name": "Mint",
+    "text": "Has a <color_E14A68>25%<end> chance of adding a <icon_mint> seed each <icon_time>.",
+    "rarity": "very_rare",
+    "growth_turns": 4,
+    "water_needed": 0,
+    "decay_turns": 4,
+    "every": 0,
+    "sells_for": 2
+  },
+  "sprinkler": {
+    "name": "Sprinkler",
+    "text": "Adjacent plants get <icon_rain><color_388BFF>1<end>/<icon_time><color_FF0037>1<end>.",
+    "rarity": "rare",
+    "growth_turns": 0,
+    "water_needed": 0,
+    "decay_turns": 0,
+    "every": 0,
+    "sells_for": 0
+  },
+  "squash": {
+    "name": "Squash",
+    "text": "Must be planted on another plant.",
     "rarity": "common",
-    "growth_turns": "",
-    "water_needed": ""
+    "growth_turns": 6,
+    "water_needed": 1,
+    "decay_turns": 0,
+    "every": 1,
+    "sells_for": 20
+  },
+  "strawberry": {
+    "name": "Strawberry",
+    "text": "",
+    "rarity": "rare",
+    "growth_turns": 12,
+    "water_needed": 2,
+    "decay_turns": 0,
+    "every": 1,
+    "sells_for": 60
   },
   "twolip": {
     "name": "Twolip",
-    "text": "Doubles something",
-    "rarity": "common",
-    "growth_turns": "",
-    "water_needed": ""
+    "text": "Adjacent plants give <color_E14A68>2x<end> more <icon_rain> when harvested.",
+    "rarity": "rare",
+    "growth_turns": 4,
+    "water_needed": 1,
+    "decay_turns": 8,
+    "every": 1,
+    "sells_for": 4
   },
   "water_lily": {
     "name": "Water Lily",
-    "text": "Gives X water when fully grown.",
-    "rarity": "common",
-    "growth_turns": "",
-    "water_needed": ""
+    "text": "Gives <icon_rain><color_388BFF>3<end>/<icon_time><color_FF0037>1<end>.",
+    "rarity": "uncommon",
+    "growth_turns": 5,
+    "water_needed": 0,
+    "decay_turns": 5,
+    "every": 0,
+    "sells_for": 0
+  },
+  "watermelon": {
+    "name": "Watermelon",
+    "text": "",
+    "rarity": "very_rare",
+    "growth_turns": 9,
+    "water_needed": 1,
+    "decay_turns": 0,
+    "every": 3,
+    "sells_for": 50
   }
 }

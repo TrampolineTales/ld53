@@ -13,11 +13,15 @@ var press_timer = 0
 var tile_database = {}
 var icon_texture_database = {}
 var rarity_database = { \"seeds\": { \"common\": [], \"uncommon\": [], \"rare\": [], \"very_rare\": [], \"none\": [] } }
+var rarity_chances = { \"seeds\": { \"uncommon\": 0, \"rare\": 0, \"very_rare\": 0 } }
+var rarity_bonuses = { \"seeds\": { \"uncommon\": 1, \"rare\": 1, \"very_rare\": 1 } }
 var seed_being_added = \"\"
 var time_until_seeds = 3
-var water_due = 25
+var water_due = 0
 var water_due_time = 12
 var pass_time_button
+var blurb_button
+var plant_deliveries = 0
 
 func _ready():
 	var tile_file = File.new()
@@ -25,6 +29,14 @@ func _ready():
 	var tile_text = tile_file.get_as_text()
 	var tile_db = JSON.parse(tile_text)
 	tile_file.close()
+	
+	blurb_button = preload(\"res://TT Button.tscn\").instance()
+	blurb_button.color = Color(\"#BF3C59\")
+	blurb_button.button_text = \"<icon_confirm>\"
+	blurb_button.rect_position = Vector2(448, 454)
+	blurb_button.call = \"close_blurb\"
+	blurb_button.target = self
+	$\"Blurb Sprite\".add_child(blurb_button)
 	
 	for a in tile_db.result:
 		var t = a
@@ -40,9 +52,6 @@ func _ready():
 		if not icon_texture_database.has(str(t)):
 			icon_texture_database[str(t)] = preload(\"res://icons/missing.png\")
 	
-	$\"Cards/Card\".data = tile_database[\"cactus\"]
-	$\"Cards/Card\".set_card_size()
-	
 	pass_time_button = preload(\"res://TT Button.tscn\").instance()
 	pass_time_button.color = Color(\"#BF3C59\")
 	pass_time_button.button_text = \"<icon_time><color_FF0037>1<end>\"
@@ -51,16 +60,56 @@ func _ready():
 	pass_time_button.target = self
 	add_child(pass_time_button)
 
+func reset():
+	get_tree().reload_current_scene()
+
+func close_blurb():
+	$\"Blurb Sprite\".visible = false
+	$\"Garden\".queued_water += $\"Garden\".round_water
+	$\"Garden\".round_water = 0
+
+func get_produced_plants():
+	var string = \"\"
+	for p in $\"Garden\".produced_plants:
+		string += \"<icon_\" + p + \">\"
+	$\"Garden\".produced_plants.clear()
+	return string
+
 func pass_time():
 	water_due_time -= 1
+	rarity_bonuses = { \"seeds\": { \"uncommon\": 1, \"rare\": 1, \"very_rare\": 1 } }
 	$\"Info2\".force_update = true
 	time_until_seeds -= 1
 	$\"Info3\".force_update = true
+	match plant_deliveries:
+		0:
+			pass
+		1:
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.2, \"rare\": 0, \"very_rare\": 0 } }
+		2:
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.3, \"rare\": 0.02, \"very_rare\": 0 } }
+		3:
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.5, \"rare\": 0.02, \"very_rare\": 0 } }
+		4:
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.58, \"rare\": 0.03, \"very_rare\": 0.01 } }
+		5:
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.6, \"rare\": 0.03, \"very_rare\": 0.01 } }
+		_:
+			rarity_chances = { \"seeds\": { \"uncommon\": 0.6, \"rare\": 0.03, \"very_rare\": 0.01 } }
 	for x in $\"Garden\".grid_size.x:
 		for y in $\"Garden\".grid_size.y:
-			$\"Garden\".grid[x][y].growth += 1
+			$\"Garden\".grid[x][y].check_effects()
 
 func add_seed(type):
+	if type == \"squash\":
+		var non_dirt = false
+		for x in $\"Garden\".grid_size.x:
+			for y in $\"Garden\".grid_size.y:
+				if $\"Garden\".grid[x][y].type != \"dirt\":
+					non_dirt = true
+					break
+		if not non_dirt:
+			return
 	seed_being_added = type
 	$\"Cards\".visible = false
 
@@ -69,17 +118,85 @@ func _process(delta):
 	while d_time >= 1.0/60.0:
 		mouse_position = get_global_mouse_position()
 		d_time -= 1.0/60.0
-		
-		$\"Info\".raw_string = \"<icon_rain><color_388BFF>\" + str($\"Garden\".water) + \"<end>\"
-		if time_until_seeds <= 0 and seed_being_added == \"\":
-			$\"Info2\".raw_string = \"Pick a Seed to Plant!\"
-			$\"Cards\".visible = true
+		if $\"Garden\".queued_water > 0:
+			$\"Garden\".queued_water -= 1
+			$\"Garden\".water += 1
+		elif $\"Garden\".queued_water < 0:
+			$\"Garden\".queued_water += 1
+			$\"Garden\".water -= 1
+		if water_due > 0:
+			$\"Info\".raw_string = \"<icon_rain><color_388BFF>\" + str($\"Garden\".water) + \"/\" + str(water_due) + \"<end>\"
 		else:
-			$\"Info2\".raw_string = \"Seed delivery in <icon_time><color_FF0037>\" + str(time_until_seeds) + \"<end>\"
-			$\"Cards\".visible = false
-		$\"Info3\".raw_string = \"Need to deliver <color_388BFF><icon_rain>\" + str(water_due) + \"<end> in <icon_time><color_FF0037>\" + str(water_due_time) + \"<end>\"
+			$\"Info\".raw_string = \"<icon_rain><color_388BFF>\" + str($\"Garden\".water) + \"<end>\"
+		if water_due_time <= 0 and not $\"Blurb Sprite\".visible:
+			for x in $\"Garden\".grid_size.x:
+				for y in $\"Garden\".grid_size.y:
+					if $\"Garden\".grid[x][y].type != \"dirt\" and $\"Garden\".grid[x][y].growth >= $\"Garden\".grid[x][y].growth_turns:
+						$\"Garden\".round_water += $\"Garden\".grid[x][y].sells_for
+						$\"Garden\".produced_plants.push_back($\"Garden\".grid[x][y].type)
+						if $\"Garden\".grid[x][y].type == \"ghost_fern\":
+							randomize()
+							if rand_range(0, 1) < 0.5:
+								$\"Garden\".grid[x][y].sprite.set_type(\"planted\")
+								$\"Garden\".grid[x][y].change_type(\"ghost_fern\")
+								$\"Garden\".timers[x][y].get_child(0).raw_string = \"<icon_time><color_FF0037>\" + str($\"Garden\".grid[x][y].growth_turns - $\"Garden\".grid[x][y].growth) + \"<end>\"
+							else:
+								$\"Garden\".grid[x][y].sprite.set_type(\"dirt\")
+								$\"Garden\".grid[x][y].change_type(\"dirt\")
+						else:
+							$\"Garden\".grid[x][y].sprite.set_type(\"dirt\")
+							$\"Garden\".grid[x][y].change_type(\"dirt\")
+			$\"Blurb Sprite\".visible = true
+			if $\"Garden\".water + $\"Garden\".queued_water + $\"Garden\".round_water < water_due:
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You did not reach your goal in time.\\nGAME OVER!\\n\\nTry again?\"
+				blurb_button.call = \"reset\"
+				blurb_button.target = self
+			elif $\"Garden\".round_water > 0:
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You delivered \" + get_produced_plants() + \" to us, which helped feed our friends and families. We are sending you <color_388BFF><icon_rain>\" + str($\"Garden\".round_water) + \"<end> to help others in need.\\nKeep it up!\"
+			else:
+				$\"Blurb Sprite/Blurb/Text\".raw_string = \"You didn\\'t deliver any plants to us this time...\"
+			water_due += 50
+			if blurb_button.call != \"reset\":
+				$\"Blurb Sprite/Blurb/Text\".raw_string += \"\\nYour new goal is <icon_rain><color_388BFF>\" + str(water_due) + \"<end>. Failing to reach this goal by the next plant delivery will result in a Game Over.\"
+			water_due_time = 12
+			plant_deliveries += 1
+		elif time_until_seeds <= 0 and seed_being_added == \"\" and not $\"Cards\".visible and not $\"Blurb Sprite\".visible:
+			$\"Info2\".raw_string = \"Pick a Seed to Plant!\"
+			var card_pool
+			var r_chances
+			card_pool = rarity_database[\"seeds\"].duplicate(true)
+			r_chances = rarity_chances[\"seeds\"].duplicate(true)
+			var database = tile_database
+			for r in r_chances.keys():
+				r_chances[r] *= rarity_bonuses[\"seeds\"][r]
+			for c in range(3):
+				var rarity
+				var card
+				if c > 0:
+					card = get_node(\"Cards/Card\" + str(c + 1))
+				else:
+					card = $\"Cards/Card\"
+				randomize()
+				var rand_num = rand_range(0, 1)
+				if card_pool.has(\"very_rare\") and rand_num < r_chances.very_rare and card_pool[\"very_rare\"].size() > 0:
+					rarity = \"very_rare\"
+				elif card_pool.has(\"rare\") and rand_num < r_chances.very_rare + r_chances.rare and card_pool[\"rare\"].size() > 0:
+					rarity = \"rare\"
+				elif card_pool.has(\"uncommon\") and rand_num < r_chances.very_rare + r_chances.rare + r_chances.uncommon and card_pool[\"uncommon\"].size() > 0:
+					rarity = \"uncommon\"
+				elif card_pool.has(\"common\") and card_pool[\"common\"].size() > 0:
+					rarity = \"common\"
+				if rarity != null and card_pool.has(rarity) and card_pool[rarity].size() > 0:
+					var rand_symbol = card_pool[rarity][floor(rand_range(0, card_pool[rarity].size()))]
+					card.data = database[rand_symbol]
+					card.set_icon_size()
+					card.set_card_size()
+					card_pool[rarity].erase(rand_symbol)
+			$\"Cards\".visible = true
+		$\"Info3\".raw_string = \"Need to deliver plants in <icon_time><color_FF0037>\" + str(water_due_time) + \"<end>\"
+		$\"Info2\".raw_string = \"Seed delivery in <icon_time><color_FF0037>\" + str(time_until_seeds) + \"<end>\"
 		if seed_being_added != \"\":
-			$\"Dragged Seed\".raw_string = \"<icon_\" + seed_being_added + \">\"
+			$\"Dragged Seed\".raw_string = \"<icon_seed>\"
 			$\"Dragged Seed\".rect_position = Vector2(mouse_position.x - 24, mouse_position.y - 24)
 			$\"Dragged Seed\".icon_z_index = 10
 		for node in get_tree().get_nodes_in_group(\"Anim Update\"):
@@ -195,6 +312,8 @@ __meta__ = {
 }
 
 [node name="Options Sprite" type="Node2D" parent="."]
+visible = false
+z_as_relative = false
 __meta__ = {
 "_edit_lock_": true
 }
@@ -217,20 +336,22 @@ __meta__ = {
 [node name="Cards" type="Node2D" parent="."]
 visible = false
 position = Vector2( 16, 96 )
-z_index = 4
+z_index = 5
 __meta__ = {
 "_edit_lock_": true
 }
 
 [node name="Card" parent="Cards" instance=ExtResource( 3 )]
+margin_left = 4.0
+margin_right = 4.0
 
 [node name="Card2" parent="Cards" instance=ExtResource( 3 )]
-margin_left = 342.0
-margin_right = 342.0
+margin_left = 346.0
+margin_right = 346.0
 
 [node name="Card3" parent="Cards" instance=ExtResource( 3 )]
-margin_left = 684.0
-margin_right = 684.0
+margin_left = 688.0
+margin_right = 688.0
 
 [node name="Info" parent="." instance=ExtResource( 1 )]
 margin_top = 526.0
@@ -244,7 +365,30 @@ margin_bottom = 536.0
 margin_top = 14.0
 margin_bottom = 24.0
 
+[node name="Blurb Sprite" type="Node2D" parent="."]
+visible = false
+position = Vector2( 32, 32 )
+z_index = 10
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Blurb" type="ColorRect" parent="Blurb Sprite"]
+margin_right = 960.0
+margin_bottom = 512.0
+color = Color( 0, 0, 0, 0.72549 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Text" parent="Blurb Sprite/Blurb" instance=ExtResource( 1 )]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 8.0
+margin_bottom = 0.0
+
 [node name="Tooltips" type="Node2D" parent="."]
+z_index = 4
 __meta__ = {
 "_edit_lock_": true
 }

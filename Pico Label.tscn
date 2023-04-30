@@ -385,7 +385,10 @@ func check_locale():
 			var icon_scale = 3
 			var i_offset = icon_offset
 			if icon_scale_override != 0:
-				icon_scale = icon_scale_override
+				if $\"/root/Main\".tile_database.has(icons[icon_num].type):
+					icon_scale = 1
+				else:
+					icon_scale = icon_scale_override
 				i_offset.x += item_icon_offset.x
 				i_offset.y += item_icon_offset.y
 				item_icon_offset = Vector2(0, 0)
@@ -423,7 +426,7 @@ func check_locale():
 				n.add_color_override(\"default_color\", colors[b])
 				n.color = colors[b]
 				if not cjk and forced_font == null and int($\"/root/Main/Options Sprite/Options\".display_font) == 0:
-					n.add_font_override(\"normal_font\", forced_font)
+					n.add_font_override(\"font\", forced_font)
 				elif cjk or forced_font != null:
 					n.add_font_override(\"font\", forced_font)
 				n.rect_position.y = text.count(\"\\n\", 0, color_positions[b * 2] + num) * ceil(y_multi)
