@@ -113,7 +113,7 @@ func draw_tutorial():
 	match tut_page:
 		1:
 			$\"Blurb Sprite/Blurb/Text\".custom_max_width = null
-			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Welcome to Pleny of Plants! You have been cursed and will die of thirst very soon. Deliver us plants so we can eat them. In return, we\\'ll deliver <icon_rain> to you and satisfy your endless thirst.\"
+			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Welcome to Plenty of Plants! You have been cursed and will die of thirst very soon. Deliver us plants so we can eat them. In return, we\\'ll deliver <icon_rain> to you and satisfy your endless thirst.\"
 		2:
 			$\"Blurb Sprite/Blurb/Text\".raw_string += \"Every plant has different characteristics.\"
 		3:
